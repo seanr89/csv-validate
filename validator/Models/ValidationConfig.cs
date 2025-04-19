@@ -7,4 +7,6 @@ public class ValidationConfig{
     public int maxLength { get; set; } = 255;
     public bool HasExpected { get; set; } = false;
     public List<string> AllowedValues { get; set; } = new List<string>();
+    public string ErrorMessage { get; set; } = string.Empty;
+    public string Regex { get; set; } = string.Empty;
 }

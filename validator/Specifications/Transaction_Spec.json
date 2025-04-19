@@ -1,5 +1,7 @@
 {
     "type" : "transactions",
+    "delimiter" : "|",
+    "headerLine" : true,
     "configurations" : [
         {
             "name" : "transaction_id",
