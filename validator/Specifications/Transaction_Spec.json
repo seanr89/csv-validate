@@ -1,0 +1,12 @@
+{
+    "type" : "transactions",
+    "configurations" : [
+        {
+            "name" : "transaction_id",
+            "type" : "string",
+            "isNullable" : false,
+            "minLength" : 1,
+            "maxLength" : 50
+        }
+    ]
+}
