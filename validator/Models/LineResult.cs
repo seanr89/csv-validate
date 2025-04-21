@@ -2,7 +2,7 @@
 public record LineResult(int lineCount, bool valid, string? errorMessage)
 {
     public int LineCount { get; } = lineCount;
-    public bool Valid { get; } = valid;
+    public bool Valid { get; set; } = valid;
     // Perhaps the error message should be cleaned up?
     public string? ErrorMessage { get; } = errorMessage;
     public List<RecordResult>? RecordResults { get; set; } = null;

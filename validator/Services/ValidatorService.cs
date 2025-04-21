@@ -20,6 +20,8 @@ public class ValidatorService
         var lines = File.ReadAllLines(filePath);
         var results = new List<LineResult>();
 
+        lines = lines.Take(500).ToArray(); // Limit to 50 lines for testing
+
         // Process each line
         for(int i = 0; i < lines.Length; i++)
         {
@@ -49,20 +51,22 @@ public class ValidatorService
         var result = new LineResult(lineCount, false, string.Empty);
         // Split the line up properly
         var fields = line.Split(fileConfig.Delimiter);
-        (bool flowControl, LineResult value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
-        if (!flowControl)
+        if(lineCount == 1)
         {
-            return value;
+            (bool flowControl, LineResult value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
+            if (!flowControl)
+            {
+                return value;
+            }
         }
-
-        // Initialise new array of record results??
-        List<RecordResult> recordResults = new List<RecordResult>();
+        else
+        {
+            //TODO: handle single file flow
+        }
 
         // here we now want to invoke the validation for each field
         for (int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
         {
-            // We need to shift over here to RecordResult creation
-
             // Pull the field and the expected validation config out!
             var field = fields[fieldIndex];
             var validationConfig = fileConfig.ValidationConfigs.FirstOrDefault(
@@ -75,30 +79,68 @@ public class ValidatorService
             }
 
 
-
             // Now lets to null check?
             if (string.IsNullOrEmpty(field) && !validationConfig.IsNullable)
             {
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
-                // result = new LineResult(lineCount, false, $"Field {fieldIndex} is null or empty");
-                // return result;
                 continue;
             }
-            if (field.Length < validationConfig.minLength)
+            if (validationConfig?.minLength != null && field.Length < validationConfig.minLength)
             {
-                result = new LineResult(lineCount, false, $"Field {fieldIndex} is too short");
-                return result;
+                result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                continue;
             }
-            if (field.Length > validationConfig.maxLength)
+            if (validationConfig?.maxLength != null && field.Length > validationConfig.maxLength)
             {
-                result = new LineResult(lineCount, false, $"Field {fieldIndex} is too long");
-                return result;
+                result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                continue;
             }
             if (validationConfig.HasExpected && !validationConfig.AllowedValues.Contains(field))
             {
-                result = new LineResult(lineCount, false, $"Field {fieldIndex} has unexpected value");
-                return result;
+                result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                continue;
             }
+
+            //TODO: do want to check types
+            if(validationConfig.type == "date")
+            {
+                //Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} field {fieldIndex} is a date");
+                // Check if the field is a valid date
+                if (!DateTime.TryParse(field, out DateTime dateValue))
+                {
+                    Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - {field} field {fieldIndex} is not a date");
+                    result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                    continue;
+                }
+            }
+            else if(validationConfig.type == "int")
+            {
+                // Check if the field is a valid int
+                if (!int.TryParse(field, out int intValue))
+                {
+                    result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                    continue;
+                }
+            }
+            else if(validationConfig.type == "decimal")
+            {
+                // Check if the field is a valid decimal
+                if (!decimal.TryParse(field, out decimal decimalValue))
+                {
+                    result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                    continue;
+                }
+            }
+        }
+
+        // If we get here without any results, we are valid
+        if(result.RecordResults == null || result.RecordResults.Count == 0)
+        {
+            result.Valid = true;
+        }
+        else{
+            Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} has errors");
+            Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} has {result.RecordResults[0].ErrorMessage} errors");
         }
 
         return result;
@@ -115,15 +157,14 @@ public class ValidatorService
     /// <returns></returns>
     private (bool flowControl, LineResult value) TryProcessHeader(int lineCount, string line, FileConfig fileConfig, ref LineResult result)
     {
+        //Console.WriteLine($"ValidatorService::TryProcessHeader: {lineCount}");
         // Validate the field based on the validation config
         // Shift to a dedicated function here!
-        if (lineCount == 0 && fileConfig.HeaderLine)
+        if (fileConfig.HeaderLine)
         {
-            // Skip header line
             var headerResult = validateHeaders(lineCount, line, fileConfig);
             if (headerResult.Count > 0)
             {
-                // result = new LineResult(lineCount, false, string.Join(", ", headerResult.Select(r => r.ErrorMessage)));
                 result = new LineResult(lineCount, false, "Header line is invalid");
                 result.AddRecordResults(headerResult);
                 return (flowControl: false, value: result);
@@ -149,26 +190,24 @@ public class ValidatorService
     /// <returns></returns>
     List<RecordResult> validateHeaders(int lineCount, string line, FileConfig fileConfig)
     {
+        //Console.WriteLine($"ValidatorService::validateHeaders: {lineCount}");
         var results = new List<RecordResult>();
         var fields = line.Split(fileConfig.Delimiter);
 
         // here we now want to invoke the validation for each field
         for(int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
         {
-            Console.WriteLine($"Validating header field {fieldIndex}: {fields[fieldIndex]}");
-            Console.WriteLine($"Validating header field {fieldIndex}: {fileConfig.ValidationConfigs[fieldIndex].Name}");
+            // Console.WriteLine($"Validating header field {fieldIndex}: {fields[fieldIndex]}");
+            // Console.WriteLine($"Validating header field {fieldIndex}: {fileConfig.ValidationConfigs[fieldIndex].Name}");
             var field = fields[fieldIndex];
             var validatorByName = fileConfig.ValidationConfigs.FirstOrDefault(
                     v => v.Name.Equals(field, StringComparison.OrdinalIgnoreCase));
             if (validatorByName == null)
             {
+                Console.WriteLine($"ValidatorService::validateHeaders: Field {field} not found in validation configs");
                 // If the field is not found in the validation configs, add an error result
                 results.Add(new RecordResult(lineCount, field, false, $"Header field '{field}' not found in validation configs"));
                 continue;
-            }
-            else
-            {
-                //TODO
             }
         }
 
