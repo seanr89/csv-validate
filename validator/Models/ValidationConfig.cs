@@ -1,12 +1,13 @@
 
-public class ValidationConfig{
-    public string? Name { get; set; }
-    public string? Type { get; set; }
-    public bool IsNullable { get; set; } = false;
-    public int minLength { get; set; } = 0;
-    public int maxLength { get; set; } = 255;
-    public bool HasExpected { get; set; } = false;
-    public List<string> AllowedValues { get; set; } = new List<string>();
-    public string ErrorMessage { get; set; } = string.Empty;
-    public string Regex { get; set; } = string.Empty;
+public record ValidationConfig(string name, string type, int index, bool isNullable, int minLength, int maxLength, bool hasExpected, List<string> allowedValues, string errorMessage)
+{
+    public required string Name { get; set; } = name;
+    public string? Type { get; set; } = type;
+    public int Index { get; set; } = index;
+    public bool IsNullable { get; set; } = isNullable;
+    public int minLength { get; set; } = minLength;
+    public int maxLength { get; set; } = maxLength;
+    public bool HasExpected { get; set; } = hasExpected;
+    public List<string> AllowedValues { get; set; } = allowedValues;
+    public string ErrorMessage { get; set; } = errorMessage;
 }

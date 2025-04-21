@@ -6,8 +6,15 @@ public class ValidatorService
         
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <param name="fileConfig"></param>
+    /// <returns></returns>
     public List<LineResult> ProcessFileWithConfig(string filePath, FileConfig fileConfig)
     {
+        Console.WriteLine($"ValidatorService::ProcessFileWithConfig: {filePath}");
         // Load the file
         var lines = File.ReadAllLines(filePath);
         var results = new List<LineResult>();
@@ -19,25 +26,116 @@ public class ValidatorService
             var lineCount = i + 1; // Line numbers are 1-based
             results.Add(ProcessLine(lineCount, line, fileConfig));
         }
-        // {
-        //     var result = ProcessLine(line, fileConfig);
-        //     results.Add(result);
-        // }
 
         return results;
     }
 
+    /// <summary>
+    /// TODO: handle single file flow
+    /// </summary>
+    /// <param name="lineCount"></param>
+    /// <param name="line"></param>
+    /// <param name="fileConfig"></param>
+    /// <returns></returns>
     private LineResult ProcessLine(int lineCount, string line, FileConfig fileConfig)
     {
         var result = new LineResult(lineCount, false, string.Empty);
-        var fields = line.Split(',');
+        // Split the line up properly
+        var fields = line.Split(fileConfig.Delimiter);
 
-        // Validate each field based on the config
-        for (int i = 0; i < fields.Length; i++)
+        // here we now want to invoke the validation for each field
+        for(int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
         {
-            
+            // Pull the field and the expected validation config out!
+            var field = fields[fieldIndex];
+            var validationConfig = fileConfig.ValidationConfigs.FirstOrDefault(
+                    v => v.Index == fieldIndex);
+            if (validationConfig == null)
+            {
+                // If the field is not found in the validation configs, add an error result
+                result = new LineResult(lineCount, false, $"Field index {fieldIndex} not found in validation configs");
+                return result;
+            }
+
+            // Validate the field based on the validation config
+            // Shift to a dedicated function here!
+            if(lineCount == 0 && fileConfig.HeaderLine)
+            {
+                // Skip header line
+                var headerResult = validateHeaders(lineCount, line, fileConfig);
+                if(headerResult.Count > 0)
+                {
+                    // result = new LineResult(lineCount, false, string.Join(", ", headerResult.Select(r => r.ErrorMessage)));
+                    result = new LineResult(lineCount, false, "Header line is invalid");
+                    result.AddRecordResults(headerResult);
+                    return result;
+                }
+                else{
+                    result = new LineResult(lineCount, true, string.Empty);
+                }
+                continue;
+            }
+
+            // Now lets to null check?
+            if (string.IsNullOrEmpty(field) && !validationConfig.IsNullable)
+            {
+                result = new LineResult(lineCount, false, $"Field {fieldIndex} is null or empty");
+                return result;
+            }
+            if (field.Length < validationConfig.minLength)
+            {
+                result = new LineResult(lineCount, false, $"Field {fieldIndex} is too short");
+                return result;
+            }
+            if (field.Length > validationConfig.maxLength)
+            {
+                result = new LineResult(lineCount, false, $"Field {fieldIndex} is too long");
+                return result;
+            }
+            if (validationConfig.HasExpected && !validationConfig.AllowedValues.Contains(field))
+            {
+                result = new LineResult(lineCount, false, $"Field {fieldIndex} has unexpected value");
+                return result;
+            }
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Validates the headers of the file based on the provided file configuration.
+    /// This method is called when the file is being processed.
+    /// It checks if the headers match the expected format and validates each field
+    /// </summary>
+    /// <param name="lineCount"></param>
+    /// <param name="line"></param>
+    /// <param name="fileConfig"></param>
+    /// <returns></returns>
+    List<RecordResult> validateHeaders(int lineCount, string line, FileConfig fileConfig)
+    {
+        var results = new List<RecordResult>();
+        var fields = line.Split(fileConfig.Delimiter);
+
+        // here we now want to invoke the validation for each field
+        for(int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
+        {
+            Console.WriteLine($"Validating header field {fieldIndex}: {fields[fieldIndex]}");
+            Console.WriteLine($"Validating header field {fieldIndex}: {fileConfig.ValidationConfigs[fieldIndex].Name}");
+            var field = fields[fieldIndex];
+            var validatorByName = fileConfig.ValidationConfigs.FirstOrDefault(
+                    v => v.Name.Equals(field, StringComparison.OrdinalIgnoreCase));
+            if (validatorByName == null)
+            {
+                // If the field is not found in the validation configs, add an error result
+                results.Add(new RecordResult(lineCount, field, false, $"Header field '{field}' not found in validation configs"));
+                continue;
+            }
+            else
+            {
+                //TODO
+            }
+        }
+
+        return results;
     }
 }

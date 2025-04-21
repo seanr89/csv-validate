@@ -1,14 +1,94 @@
 {
-    "type" : "transactions",
+    "fileType" : "transactions",
     "delimiter" : "|",
     "headerLine" : true,
-    "configurations" : [
+    "validationConfigs" : [
         {
-            "name" : "transaction_id",
-            "type" : "string",
-            "isNullable" : false,
-            "minLength" : 1,
-            "maxLength" : 50
+            "name": "TransactionId",
+            "type": "string",
+            "index": 0,
+            "isNullable": false,
+            "minLength": 1,
+            "maxLength": 36,
+            "errorMessage": "Transaction ID must be a non-empty string with a maximum length of 36 characters."
+        },
+        {
+            "name": "AccountId",
+            "type": "string",
+            "index": 1,
+            "isNullable": false,
+            "minLength": 1,
+            "maxLength": 36,
+            "errorMessage": "Account ID must be a non-empty string with a maximum length of 36 characters."
+        },
+        {
+            "name": "TransactionDate",
+            "type": "date",
+            "index": 2,
+            "isNullable": false,
+            "errorMessage": "Transaction date must be a valid date in the format YYYY-MM-DD."
+        },
+        {
+            "name": "TransactionType",
+            "type": "string",
+            "index": 3,
+            "isNullable": false,
+            "minLength": 1,
+            "maxLength": 10,
+            "errorMessage": "Transaction type must be a non-empty string with a maximum length of 10 characters."
+        },
+        {
+            "name": "TransactionCurrency",
+            "type": "string",
+            "index": 4,
+            "isNullable": false,
+            "minLength": 3,
+            "maxLength": 3,
+            "errorMessage": "Transaction currency must be a 3-letter ISO currency code."
+        },
+        {
+            "name": "TransactionAmount",
+            "type": "decimal",
+            "index": 5,
+            "isNullable": false,
+            "errorMessage": "Transaction amount must be a valid decimal number."
+        },
+        {
+            "name": "TransactionNarrative",
+            "type": "string",
+            "index": 6,
+            "isNullable": true,
+            "maxLength": 255,
+            "errorMessage": "Transaction narrative must be a string with a maximum length of 255 characters."
+        },
+        {
+            "name": "ReversalIndicator",
+            "type": "string",
+            "index": 7,
+            "isNullable": false,
+            "minLength": 1,
+            "maxLength": 1,
+            "allowedValues": ["Y", "N"],
+            "errorMessage": "Reversal indicator must be 'Y' or 'N'."
+        },
+        {
+            "name": "MID",
+            "type": "string",
+            "index": 8,
+            "isNullable": false,
+            "minLength": 1,
+            "maxLength": 50,
+            "errorMessage": "Merchant ID (MID) must be a non-empty string with a maximum length of 50 characters."
+        },
+        {
+            "name": "CardType",
+            "type": "string",
+            "index": 9,
+            "isNullable": false,
+            "minLength": 1,
+            "maxLength": 10,
+            "allowedValues": ["Visa", "MasterCard", "Amex", "Discover", "DinersClub", "JCB"],
+            "errorMessage": "Card type must be one of the specified values: Visa, MasterCard, Amex, Discover, DinersClub, JCB."
         }
     ]
 }
