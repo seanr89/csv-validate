@@ -61,6 +61,8 @@ public class ValidatorService
         // here we now want to invoke the validation for each field
         for (int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
         {
+            // We need to shift over here to RecordResult creation
+
             // Pull the field and the expected validation config out!
             var field = fields[fieldIndex];
             var validationConfig = fileConfig.ValidationConfigs.FirstOrDefault(
@@ -77,8 +79,10 @@ public class ValidatorService
             // Now lets to null check?
             if (string.IsNullOrEmpty(field) && !validationConfig.IsNullable)
             {
-                result = new LineResult(lineCount, false, $"Field {fieldIndex} is null or empty");
-                return result;
+                result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                // result = new LineResult(lineCount, false, $"Field {fieldIndex} is null or empty");
+                // return result;
+                continue;
             }
             if (field.Length < validationConfig.minLength)
             {
