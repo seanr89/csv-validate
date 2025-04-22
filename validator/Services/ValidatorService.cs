@@ -16,13 +16,12 @@ public class ValidatorService
     public List<LineResult> ProcessFileWithConfig(string filePath, FileConfig fileConfig)
     {
         Console.WriteLine($"ValidatorService::ProcessFileWithConfig: {filePath}");
-        // Load the file
+        // Load the file and read the lines all together
         var lines = File.ReadAllLines(filePath);
-        var results = new List<LineResult>();
+        List<LineResult> results = [];
+        //lines = lines.Take(50).ToArray(); // Limit to 50 lines for testing
 
-        lines = lines.Take(500).ToArray(); // Limit to 50 lines for testing
-
-        // Process each line
+        // Process each line one at a time!
         for(int i = 0; i < lines.Length; i++)
         {
             var line = lines[i];
@@ -30,17 +29,17 @@ public class ValidatorService
             results.Add(ProcessLine(lineCount, line, fileConfig));
         }
 
-        //TODO:
-        if(results.Any(r => r.Valid == false) == true)
-        {
-            Console.WriteLine($"ValidatorService::ProcessFileWithConfig: {filePath} has errors");
-        }
+        // if(results.Any(r => r.Valid == false) == true)
+        // {
+        //     Console.WriteLine($"ValidatorService::ProcessFileWithConfig: {filePath} has errors");
+        // }
 
         return results;
     }
 
     /// <summary>
-    /// TODO: handle single file flow
+    /// Handle single live processing of a line
+    /// This will process the line and return a result
     /// </summary>
     /// <param name="lineCount"></param>
     /// <param name="line"></param>
@@ -49,8 +48,17 @@ public class ValidatorService
     private LineResult ProcessLine(int lineCount, string line, FileConfig fileConfig)
     {
         var result = new LineResult(lineCount, false, string.Empty);
-        // Split the line up properly
+        // Split the line up properly by the delimiter
         var fields = line.Split(fileConfig.Delimiter);
+        //Check for empty lines?
+        if(fields.Length != 0)
+        {
+            //Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - no fields");
+            result = new LineResult(lineCount, false, "No fields found");
+            return result;
+        }
+
+        //TODO: move this to a function and before the for loop!!
         if(lineCount == 1)
         {
             (bool flowControl, LineResult value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
@@ -59,12 +67,8 @@ public class ValidatorService
                 return value;
             }
         }
-        else
-        {
-            //TODO: handle single file flow
-        }
 
-        // here we now want to invoke the validation for each field
+        // here we now want to invoke the validation for each field step by step
         for (int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
         {
             // Pull the field and the expected validation config out!
@@ -131,17 +135,17 @@ public class ValidatorService
                     continue;
                 }
             }
-        }
+        }//End of for loop
 
         // If we get here without any results, we are valid
         if(result.RecordResults == null || result.RecordResults.Count == 0)
         {
             result.Valid = true;
         }
-        else{
-            Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} has errors");
-            Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} has {result.RecordResults[0].ErrorMessage} errors");
-        }
+        // else{
+        //     Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} has errors");
+        //     Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} has {result.RecordResults[0].ErrorMessage} errors");
+        // }
 
         return result;
     }

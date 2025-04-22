@@ -40,7 +40,7 @@ public class App{
         // now we want to process each file
         foreach (var file in files)
         {
-            Console.WriteLine($"Processing file {file}");
+            //Console.WriteLine($"Processing file {file}");
             var results = _validatorService.ProcessFileWithConfig(file, fileConfig);
             if (results == null)
             {
@@ -48,16 +48,10 @@ public class App{
                 continue;
             }
             else{
-                Console.WriteLine($"File {file} processed successfully");
-                Console.WriteLine($"Results: {results.Count} lines processed");
                 var count = results.Count(r => r.Valid == false);
                 if (count > 0)
                 {
                     Console.WriteLine($"File {file} has {count} errors");
-                    // foreach (var result in results.Where(r => r.Valid == false))
-                    // {
-                    //     Console.WriteLine($"Line {result.LineCount}: {result.ErrorMessage}");
-                    // }
                 }
                 else
                 {
