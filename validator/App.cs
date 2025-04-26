@@ -1,5 +1,6 @@
 
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Spectre.Console;
 
 public class App{
@@ -58,9 +59,34 @@ public class App{
                     Console.WriteLine($"File {file} has no errors");
                 }
             }
-        }
+
+            //TODO write step to write the results to a file
+            WriteToJson(file, results);
+        } // end of file loop
 
         Console.WriteLine("App::Completed");
+    }
+
+    void WriteToJson(string filePath, List<LineResult> results)
+    {
+        string outPutName = filePath.Replace(".csv", ".json").Split("/").Last();
+        string outPutPath = Path.Combine("../files/outputs/", outPutName);
+
+        // create JSON configuration for newtonsoft
+        using (StringWriter sw = new StringWriter())
+        using (JsonTextWriter writer = new JsonTextWriter(sw) { 
+            Formatting = Formatting.Indented, Indentation = 4, IndentChar = ' ' })
+        {
+            JsonSerializer serializer = new JsonSerializer();
+            serializer.Serialize(writer, results);
+            string json = sw.ToString();
+
+            // write the json to a file
+            using (StreamWriter file = File.CreateText(outPutPath))
+            {
+                file.WriteLine(json);
+            }
+        } 
     }
 
     /// <summary>

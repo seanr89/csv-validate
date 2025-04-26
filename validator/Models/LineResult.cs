@@ -13,10 +13,11 @@ public record LineResult(int lineCount, bool valid, string? errorMessage)
     /// <param name="recordResult"></param>
     public void AddRecordResult(RecordResult recordResult)
     {
-        if (RecordResults == null)
+        if(recordResult == null)
         {
-            RecordResults = new List<RecordResult>();
+            return;
         }
+        RecordResults ??= new List<RecordResult>();
         RecordResults.Add(recordResult);
     }
 

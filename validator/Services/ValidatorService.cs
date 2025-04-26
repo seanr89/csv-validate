@@ -21,18 +21,32 @@ public class ValidatorService
         List<LineResult> results = [];
         //lines = lines.Take(50).ToArray(); // Limit to 50 lines for testing
 
+        //TODO: move this to a function and before the for loop!!
+        if(fileConfig.HeaderLine)
+        {
+            //Console.WriteLine($"ValidatorService::ProcessFileWithConfig: {filePath} has a header line");
+            // Process the header line
+            var line = lines[0];
+            var lineCount = 1; // Line numbers are 1-based
+            // Validate the field based on the validation config
+            // Shift to a dedicated function here!
+            var result = new LineResult(lineCount, false, string.Empty);
+            (bool _, LineResult value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
+            results.Add(result);
+        }
+
         // Process each line one at a time!
         for(int i = 0; i < lines.Length; i++)
         {
+            if(i == 0 && fileConfig.HeaderLine)
+            {
+                // Skip the header line
+                continue;
+            }
             var line = lines[i];
             var lineCount = i + 1; // Line numbers are 1-based
             results.Add(ProcessLine(lineCount, line, fileConfig));
         }
-
-        // if(results.Any(r => r.Valid == false) == true)
-        // {
-        //     Console.WriteLine($"ValidatorService::ProcessFileWithConfig: {filePath} has errors");
-        // }
 
         return results;
     }
@@ -58,15 +72,15 @@ public class ValidatorService
             return result;
         }
 
-        //TODO: move this to a function and before the for loop!!
-        if(lineCount == 1)
-        {
-            (bool flowControl, LineResult value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
-            if (!flowControl)
-            {
-                return value;
-            }
-        }
+        // //TODO: move this to a function and before the for loop!!
+        // if(lineCount == 1)
+        // {
+        //     (bool flowControl, LineResult value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
+        //     if (!flowControl)
+        //     {
+        //         return value;
+        //     }
+        // }
 
         // here we now want to invoke the validation for each field step by step
         for (int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
@@ -89,6 +103,7 @@ public class ValidatorService
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
             }
+            // minlength and max length checks
             if (validationConfig?.minLength != null && field.Length < validationConfig.minLength)
             {
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
@@ -99,42 +114,15 @@ public class ValidatorService
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
             }
+            // expected values checks
             if (validationConfig.HasExpected && !validationConfig.AllowedValues.Contains(field))
             {
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
             }
 
-            //TODO: do want to check types
-            if(validationConfig.type == "date")
-            {
-                //Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} field {fieldIndex} is a date");
-                // Check if the field is a valid date
-                if (!DateTime.TryParse(field, out DateTime dateValue))
-                {
-                    Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - {field} field {fieldIndex} is not a date");
-                    result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
-                    continue;
-                }
-            }
-            else if(validationConfig.type == "int")
-            {
-                // Check if the field is a valid int
-                if (!int.TryParse(field, out int intValue))
-                {
-                    result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
-                    continue;
-                }
-            }
-            else if(validationConfig.type == "decimal")
-            {
-                // Check if the field is a valid decimal
-                if (!decimal.TryParse(field, out decimal decimalValue))
-                {
-                    result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
-                    continue;
-                }
-            }
+            // move validationConfig type checl to dedicated function
+            result.AddRecordResult(ProcessFieldByType(lineCount, field, validationConfig, fieldIndex));
         }//End of for loop
 
         // If we get here without any results, we are valid
@@ -142,12 +130,39 @@ public class ValidatorService
         {
             result.Valid = true;
         }
-        // else{
-        //     Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} has errors");
-        //     Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} has {result.RecordResults[0].ErrorMessage} errors");
-        // }
 
         return result;
+    }
+
+    RecordResult? ProcessFieldByType(int lineCount, string field, ValidationConfig validationConfig, int fieldIndex)
+    {
+        //var result = new RecordResult(lineCount, field, false, string.Empty);
+        if(validationConfig.type == "date")
+        {
+            // Check if the field is a valid date
+            if (!DateTime.TryParse(field, out DateTime dateValue))
+            {
+                Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - {field} field {fieldIndex} is not a date");
+                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
+            }
+        }
+        else if(validationConfig.type == "int")
+        {
+            // Check if the field is a valid int
+            if (!int.TryParse(field, out int intValue))
+            {
+                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
+            }
+        }
+        else if(validationConfig.type == "decimal")
+        {
+            // Check if the field is a valid decimal
+            if (!decimal.TryParse(field, out decimal decimalValue))
+            {
+                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
+            }
+        }
+        return null;
     }
 
     /// <summary>
@@ -214,7 +229,6 @@ public class ValidatorService
                 continue;
             }
         }
-
         return results;
     }
 }
