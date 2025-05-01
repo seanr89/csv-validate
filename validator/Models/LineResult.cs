@@ -1,11 +1,10 @@
 
-public record LineResult(int lineCount, bool valid, string? errorMessage)
+public class LineResult(int lineCount, bool valid, string? message)
 {
     public int LineCount { get; } = lineCount;
     public bool Valid { get; set; } = valid;
-    // Perhaps the error message should be cleaned up?
-    public string? ErrorMessage { get; } = errorMessage;
-    public List<RecordResult>? RecordResults { get; set; } = null;
+    public string? Message { get; set; } = message;
+    public List<RecordResult>? RecordResults { get; set; } = [];
 
     /// <summary>
     /// simple add simple result for a record object

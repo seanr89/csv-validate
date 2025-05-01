@@ -65,7 +65,7 @@ public class ValidatorService
         // Split the line up properly by the delimiter
         var fields = line.Split(fileConfig.Delimiter);
         //Check for empty lines?
-        if(fields.Length != 0)
+        if(fields.Length <= 0)
         {
             //Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - no fields");
             result = new LineResult(lineCount, false, "No fields found");
@@ -129,6 +129,7 @@ public class ValidatorService
         if(result.RecordResults == null || result.RecordResults.Count == 0)
         {
             result.Valid = true;
+            result.Message = "Line is valid";
         }
 
         return result;

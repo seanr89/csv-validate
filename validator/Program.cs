@@ -24,4 +24,5 @@ var host = Host.CreateDefaultBuilder(args)
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 // logger.LogDebug("Host created.");
-host.Services.GetService<App>().Run();
+var app = host.Services.GetRequiredService<App>();
+app?.Run();
