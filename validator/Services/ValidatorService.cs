@@ -19,19 +19,18 @@ public class ValidatorService
         // Load the file and read the lines all together
         var lines = File.ReadAllLines(filePath);
         List<LineResult> results = [];
-        //lines = lines.Take(50).ToArray(); // Limit to 50 lines for testing
 
-        //TODO: move this to a function and before the for loop!!
+        // Run the file through the validator for header lines if needed
         if(fileConfig.HeaderLine)
         {
-            //Console.WriteLine($"ValidatorService::ProcessFileWithConfig: {filePath} has a header line");
+            // TODO: if header process is there we should also check the line config to the header positioning!
             // Process the header line
             var line = lines[0];
             var lineCount = 1; // Line numbers are 1-based
             // Validate the field based on the validation config
             // Shift to a dedicated function here!
             var result = new LineResult(lineCount, false, string.Empty);
-            (bool _, LineResult value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
+            (bool _, LineResult? value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
             results.Add(result);
         }
 
@@ -72,16 +71,6 @@ public class ValidatorService
             return result;
         }
 
-        // //TODO: move this to a function and before the for loop!!
-        // if(lineCount == 1)
-        // {
-        //     (bool flowControl, LineResult value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
-        //     if (!flowControl)
-        //     {
-        //         return value;
-        //     }
-        // }
-
         // here we now want to invoke the validation for each field step by step
         for (int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
         {
@@ -115,7 +104,7 @@ public class ValidatorService
                 continue;
             }
             // expected values checks
-            if (validationConfig.HasExpected && !validationConfig.AllowedValues.Contains(field))
+            if (validationConfig?.HasExpected ?? false && !validationConfig.AllowedValues.Contains(field))
             {
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
@@ -135,6 +124,16 @@ public class ValidatorService
         return result;
     }
 
+    /// <summary>
+    /// Process the field by type (date, int, decimal)
+    /// This will check the field against the validation config type
+    /// and return a result
+    /// </summary>
+    /// <param name="lineCount"></param>
+    /// <param name="field"></param>
+    /// <param name="validationConfig"></param>
+    /// <param name="fieldIndex"></param>
+    /// <returns></returns>
     RecordResult? ProcessFieldByType(int lineCount, string field, ValidationConfig validationConfig, int fieldIndex)
     {
         //var result = new RecordResult(lineCount, field, false, string.Empty);
@@ -143,7 +142,7 @@ public class ValidatorService
             // Check if the field is a valid date
             if (!DateTime.TryParse(field, out DateTime dateValue))
             {
-                Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - {field} field {fieldIndex} is not a date");
+                //Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - {field} field {fieldIndex} is not a date");
                 return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
             }
         }
@@ -167,7 +166,9 @@ public class ValidatorService
     }
 
     /// <summary>
-    /// 
+    /// Dedicated function to process the header line
+    /// This will check the header line against the validation config
+    /// and return a result
     /// </summary>
     /// <param name="flowControl"></param>
     /// <param name="lineCount"></param>
@@ -175,7 +176,7 @@ public class ValidatorService
     /// <param name="fileConfig"></param>
     /// <param name="result"></param>
     /// <returns></returns>
-    private (bool flowControl, LineResult value) TryProcessHeader(int lineCount, string line, FileConfig fileConfig, ref LineResult result)
+    private (bool flowControl, LineResult? value) TryProcessHeader(int lineCount, string line, FileConfig fileConfig, ref LineResult result)
     {
         //Console.WriteLine($"ValidatorService::TryProcessHeader: {lineCount}");
         // Validate the field based on the validation config

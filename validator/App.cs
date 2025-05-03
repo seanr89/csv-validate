@@ -18,7 +18,7 @@ public class App{
 
     public void Run()
     {
-        Console.WriteLine("App::Run");
+        _logger.LogInformation("App::Run");
 
         string fileType = CreateAndWaitForResponse("Select file type", new string[] { "transactions", "account", "customer" });
         //Console.WriteLine($"You selected {fileType}");
@@ -64,7 +64,7 @@ public class App{
             WriteToJson(file, results);
         } // end of file loop
 
-        Console.WriteLine("App::Completed");
+        _logger.LogInformation("App::Completed");
     }
 
     void WriteToJson(string filePath, List<LineResult> results)
@@ -73,27 +73,30 @@ public class App{
         string outPutPath = Path.Combine("../files/outputs/", outPutName);
 
         // create JSON configuration for newtonsoft
-        using (StringWriter sw = new StringWriter())
-        using (JsonTextWriter writer = new JsonTextWriter(sw) { 
-            Formatting = Formatting.Indented, Indentation = 4, IndentChar = ' ' })
+        using StringWriter sw = new StringWriter();
+        using JsonTextWriter writer = new JsonTextWriter(sw)
         {
-            JsonSerializer serializer = new JsonSerializer();
-            serializer.Serialize(writer, results);
-            string json = sw.ToString();
+            Formatting = Formatting.Indented,
+            Indentation = 4,
+            IndentChar = ' '
+        };
+        JsonSerializer serializer = new JsonSerializer();
+        serializer.Serialize(writer, results);
+        string json = sw.ToString();
 
-            // write the json to a file
-            using (StreamWriter file = File.CreateText(outPutPath))
-            {
-                file.WriteLine(json);
-            }
-        } 
+        // write the json to a file
+        using (StreamWriter file = File.CreateText(outPutPath))
+        {
+            file.WriteLine(json);
+        }
     }
 
     /// <summary>
     /// Create selection prompt and wait for response
+    /// Only a single choice is allowed!
     /// </summary>
-    /// <param name="message"></param>
-    /// <param name="choices"></param>
+    /// <param name="message">Question to be asked</param>
+    /// <param name="choices">array or string option types</param>
     string CreateAndWaitForResponse(string message, string[] choices)
     {
         var response = AnsiConsole.Prompt(

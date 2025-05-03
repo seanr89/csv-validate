@@ -10,7 +10,7 @@ public class LineResult(int lineCount, bool valid, string? message)
     /// simple add simple result for a record object
     /// </summary>
     /// <param name="recordResult"></param>
-    public void AddRecordResult(RecordResult recordResult)
+    public void AddRecordResult(RecordResult? recordResult)
     {
         if(recordResult == null)
         {

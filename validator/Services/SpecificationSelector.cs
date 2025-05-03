@@ -11,7 +11,7 @@ public class SpecificationSelector
         LoadAllFilePathsFromDirectory("Specifications");
     }
 
-    public FileConfig GetFileConfig(string fileType)
+    public FileConfig? GetFileConfig(string fileType)
     {
         Console.WriteLine($"Getting file config for {fileType}");
         // Find the file config based on the file type
@@ -38,19 +38,27 @@ public class SpecificationSelector
                 Console.WriteLine($"Loading file: {file}");
                 // Load the file config
                 var fileConfig = LoadFileConfig(file);
+                // only add if the file config is not null
+                if (fileConfig == null)
+                {
+                    Console.WriteLine($"Error: Unable to load file config from {file}");
+                    continue;
+                }
                 _fileConfigs.Add(fileConfig);
             }
         }
     }
-    FileConfig LoadFileConfig(string filePath)
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <returns></returns>
+    FileConfig? LoadFileConfig(string filePath)
     {
         // Load the file config from the JSON file
         var jsonString = File.ReadAllText(filePath);
         var fileConfig = JsonConvert.DeserializeObject<FileConfig>(jsonString);
-        Console.WriteLine($"LoadFileConfig config: {fileConfig.FileType}");
-        // Console.WriteLine($"LoadFileConfig config: {fileConfig.Delimiter}");
-        // Console.WriteLine($"LoadFileConfig config: {fileConfig.HeaderLine}");
-        // Console.WriteLine($"LoadFileConfig config: {fileConfig.ValidationConfigs.Count} validation configs");
         return fileConfig;
     }
 }
