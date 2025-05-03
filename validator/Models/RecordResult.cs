@@ -1,5 +1,5 @@
 
-public record RecordResult(
+public class RecordResult(
     int recordCount,
     string key,
     bool valid,
