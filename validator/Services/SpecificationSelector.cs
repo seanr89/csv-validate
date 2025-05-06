@@ -24,6 +24,12 @@ public class SpecificationSelector
         return fileConfig;
     }
 
+    /// <summary>
+    /// Internal function to load all file paths from a directory
+    /// This will load all files in the directory and filter based on the extension
+    /// and load the file config
+    /// </summary>
+    /// <param name="directoryPath"></param>
     void LoadAllFilePathsFromDirectory(string directoryPath)
     {
         Console.WriteLine($"Loading file paths from directory: {directoryPath}");

@@ -26,7 +26,7 @@ public class App{
         var fileConfig = _specificationSelector.GetFileConfig(fileType);
         if (fileConfig == null)
         {
-            Console.WriteLine($"Error: Unable to find file config for {fileType}");
+            Console.WriteLine($"Error: No config found for {fileType} - ending program");
             return;
         }
 
@@ -37,7 +37,9 @@ public class App{
             Console.WriteLine($"Error: No files found for {fileType}");
             return;
         }
-
+        
+        AnsiConsole.MarkupLine($"[green]Found {files.Length} files for {fileType}[/]");
+        
         // now we want to process each file
         foreach (var file in files)
         {

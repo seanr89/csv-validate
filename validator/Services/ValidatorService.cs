@@ -1,11 +1,6 @@
 
 public class ValidatorService
 {
-    public ValidatorService()
-    {
-        
-    }
-
     /// <summary>
     /// Simple job to intake a file path and a file config for processing
     /// This will process the file and return a list of results
@@ -46,7 +41,6 @@ public class ValidatorService
             var lineCount = i + 1; // Line numbers are 1-based
             results.Add(ProcessLine(lineCount, line, fileConfig));
         }
-
         return results;
     }
 
