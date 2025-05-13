@@ -1,0 +1,6 @@
+{
+    "fileType" : "account",
+    "delimiter" : "|",
+    "headerLine" : true,
+    "validationConfigs" : []
+}

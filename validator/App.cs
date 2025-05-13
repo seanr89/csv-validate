@@ -30,6 +30,14 @@ public class App{
             return;
         }
 
+        if(fileConfig.ValidationConfigs.Count == 0)
+        {
+            Console.WriteLine($"Error: No validation configs found for {fileType} - ending program");
+            return;
+        }
+
+        Console.WriteLine($"File config found for {fileType} with {fileConfig.ValidationConfigs.Count} line configs");
+
         // go grab the files for the type
         var files = Directory.GetFiles("../files/", $"{fileType}.csv");
         if(files.Length == 0)
@@ -39,7 +47,7 @@ public class App{
         }
         
         AnsiConsole.MarkupLine($"[green]Found {files.Length} files for {fileType}[/]");
-        
+
         // now we want to process each file
         foreach (var file in files)
         {
@@ -56,19 +64,23 @@ public class App{
                 {
                     Console.WriteLine($"File {file} has {count} errors");
                 }
-                else
-                {
-                    Console.WriteLine($"File {file} has no errors");
-                }
             }
-
-            //TODO write step to write the results to a file
             WriteToJson(file, results);
         } // end of file loop
 
         _logger.LogInformation("App::Completed");
     }
 
+    /// <summary>
+    /// Save the results to a JSON file
+    /// This will create a new file in the outputs directory
+    /// and write the results to it
+    /// The file name will be the same as the input file
+    /// but with a .json extension
+    /// and the path will be ../files/outputs/
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <param name="results"></param>
     void WriteToJson(string filePath, List<LineResult> results)
     {
         string outPutName = filePath.Replace(".csv", ".json").Split("/").Last();
@@ -90,6 +102,9 @@ public class App{
         using (StreamWriter file = File.CreateText(outPutPath))
         {
             file.WriteLine(json);
+            file.Flush();
+            file.Close();
+            AnsiConsole.MarkupLine($"[green]Wrote results to {outPutPath}[/]");
         }
     }
 

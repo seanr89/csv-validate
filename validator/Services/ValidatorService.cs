@@ -37,9 +37,7 @@ public class ValidatorService
                 // Skip the header line
                 continue;
             }
-            var line = lines[i];
-            var lineCount = i + 1; // Line numbers are 1-based
-            results.Add(ProcessLine(lineCount, line, fileConfig));
+            results.Add(ProcessLine(i+1, lines[i], fileConfig));
         }
         return results;
     }
@@ -48,8 +46,8 @@ public class ValidatorService
     /// Handle single live processing of a line
     /// This will process the line and return a result
     /// </summary>
-    /// <param name="lineCount"></param>
-    /// <param name="line"></param>
+    /// <param name="lineCount">current line increment count</param>
+    /// <param name="line">file line record!</param>
     /// <param name="fileConfig"></param>
     /// <returns></returns>
     private LineResult ProcessLine(int lineCount, string line, FileConfig fileConfig)
@@ -119,18 +117,18 @@ public class ValidatorService
     }
 
     /// <summary>
-    /// Process the field by type (date, int, decimal)
+    /// Process the field by type (date, int, decimal, etc...)
     /// This will check the field against the validation config type
     /// and return a result
     /// </summary>
-    /// <param name="lineCount"></param>
+    /// <param name="lineCount">current line location!</param>
     /// <param name="field"></param>
     /// <param name="validationConfig"></param>
     /// <param name="fieldIndex"></param>
     /// <returns></returns>
     RecordResult? ProcessFieldByType(int lineCount, string field, ValidationConfig validationConfig, int fieldIndex)
     {
-        //var result = new RecordResult(lineCount, field, false, string.Empty);
+        //TODO: move this to a dedicated function / or class!
         if(validationConfig.type == "date")
         {
             // Check if the field is a valid date
@@ -155,6 +153,33 @@ public class ValidatorService
             {
                 return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
             }
+        }
+        else if(validationConfig.type == "string")
+        {
+            // Check if the field is a valid string
+            // No need to do anything here, just return null
+            return null;
+        }
+        else if (validationConfig.type == "bool")
+        {
+            // Check if the field is a valid bool
+            if (!bool.TryParse(field, out bool boolValue))
+            {
+                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
+            }
+        }
+        else if (validationConfig.type == "guid")
+        {
+            // Check if the field is a valid guid
+            if (!Guid.TryParse(field, out Guid guidValue))
+            {
+                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
+            }
+        }
+        else
+        {
+            // If the type is not recognized, add an error result
+            return new RecordResult(lineCount, field, false, $"Field {field} has an invalid type");
         }
         return null;
     }

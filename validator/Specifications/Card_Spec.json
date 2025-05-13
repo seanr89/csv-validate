@@ -1,0 +1,16 @@
+{
+    "fileType" : "card",
+    "delimiter" : "|",
+    "headerLine" : true,
+    "validationConfigs" : [
+        {
+            "name": "CardId",
+            "type": "string",
+            "index": 0,
+            "isNullable": false,
+            "minLength": 1,
+            "maxLength": 36,
+            "errorMessage": "Card ID must be a non-empty string with a maximum length of 36 characters."
+        }
+    ]
+}
