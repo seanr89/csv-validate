@@ -95,8 +95,9 @@ public class ValidatorService
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
             }
-            // expected values checks
-            if (validationConfig?.HasExpected ?? false && !validationConfig.AllowedValues.Contains(field))
+            // expected values checks - if expected values are set
+            // we need to check if the field is in the expected values
+            if (validationConfig?.HasExpected ?? false && validationConfig.AllowedValues.Contains(field.Trim()) == false)
             {
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
@@ -237,8 +238,6 @@ public class ValidatorService
         // here we now want to invoke the validation for each field
         for(int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
         {
-            // Console.WriteLine($"Validating header field {fieldIndex}: {fields[fieldIndex]}");
-            // Console.WriteLine($"Validating header field {fieldIndex}: {fileConfig.ValidationConfigs[fieldIndex].Name}");
             var field = fields[fieldIndex];
             var validatorByName = fileConfig.ValidationConfigs.FirstOrDefault(
                     v => v.Name.Equals(field, StringComparison.OrdinalIgnoreCase));

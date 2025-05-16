@@ -93,8 +93,8 @@
             "minLength": 1,
             "maxLength": 10,
             "hasExpected": true,
-            "allowedValues": ["Visa", "MasterCard", "Amex", "Discover", "DinersClub", "JCB"],
-            "errorMessage": "Card type must be one of the specified values: Visa, MasterCard, Amex, Discover, DinersClub, JCB."
+            "allowedValues": ["Visa", "Mastercard", "Amex", "Discover", "DinersClub", "JCB"],
+            "errorMessage": "Card type must be one of the specified values: Visa, Mastercard, Amex, Discover, DinersClub, JCB."
         }
     ]
 }
