@@ -30,7 +30,7 @@ public class TypeValidator : ITypeValidator
     /// <param name="expectedType"></param>
     /// <param name="formats"></param>
     /// <returns></returns>
-    public bool ValidateType(string value, string expectedType, string[] formats)
+    public bool ValidateType(string value, string expectedType, string[]? formats)
     {
         //_logger.LogInformation($"Validating type for value: {value} against expected type: {expectedType}");
 
@@ -71,8 +71,12 @@ public class TypeValidator : ITypeValidator
         }
     }
 
-    public bool ValidateDateTime(string value, string[] formats)
+    public bool ValidateDateTime(string value, string[]? formats)
     {
+        if (formats == null || formats.Length == 0)
+        {
+            formats = ["yyyy-MM-dd", "MM/dd/yyyy", "dd/MM/yyyy"]; // Default formats
+        }
         foreach (var format in formats)
         {
             if (DateTime.TryParseExact(value, format, null, System.Globalization.DateTimeStyles.None, out _))
@@ -84,8 +88,12 @@ public class TypeValidator : ITypeValidator
         return false;
     }
 
-    public bool ValidateDate(string value, string[] formats)
+    public bool ValidateDate(string value, string[]? formats)
     {
+        if (formats == null || formats.Length == 0)
+        {
+            formats = ["yyyy-MM-dd", "MM/dd/yyyy", "dd/MM/yyyy"]; // Default formats
+        }
         foreach (var format in formats)
         {
             if (DateTime.TryParseExact(value, format, null, System.Globalization.DateTimeStyles.None, out _))

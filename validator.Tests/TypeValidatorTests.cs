@@ -85,9 +85,9 @@ namespace validator.Tests
         [InlineData("notadecimal", "decimal", null, false)]
         [InlineData("any string", "string", null, true)]
         [InlineData("foo", "unknown", null, true)]
-        public void ValidateType_Works(string value, string expectedType, string[] formats, bool expected)
+        public void ValidateType_Works(string value, string expectedType, string[]? formats, bool expected)
         {
-            var result = _validator.ValidateType(value, expectedType, formats ?? Array.Empty<string>());
+            var result = _validator.ValidateType(value, expectedType, formats);
             Assert.Equal(expected, result);
         }
     }

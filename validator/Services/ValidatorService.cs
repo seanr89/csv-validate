@@ -91,13 +91,20 @@ public class ValidatorService : IValidatorService
                 return result;
             }
 
-
             // Now lets to null check?
             if (string.IsNullOrEmpty(field) && !validationConfig.IsNullable)
             {
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
             }
+
+            // check for null with allowance and skip if needed
+            if (string.IsNullOrEmpty(field) && validationConfig.IsNullable)
+            {
+                result.AddRecordResult(new RecordResult(lineCount, field, true, string.Empty));
+                continue;
+            }
+
             // minlength and max length checks
             if (validationConfig?.minLength != null && field.Length < validationConfig.minLength)
             {
@@ -109,18 +116,17 @@ public class ValidatorService : IValidatorService
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
             }
+
+            // This is very messy and should be moved to a dedicated function
             // expected values checks - if expected values are set
             // we need to check if the field is in the expected values
             if ((validationConfig?.HasExpected ?? false != true) && !validationConfig.AllowedValues.Contains(field.Trim()))
             {
-                var contained = validationConfig.AllowedValues.Contains(field.Trim());
-                Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - field {field} not in expected values ({validationConfig.HasExpected}) and contained: {contained}");
-                Console.WriteLine($"ValidatorService::ProcessLine: options: {string.Join(", ", validationConfig.AllowedValues)}");
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
             }
 
-            // move validationConfig type checl to dedicated function
+            // move validationConfig type check to dedicated function etc...
             result.AddRecordResult(ProcessFieldByType(lineCount, field, validationConfig, fieldIndex));
         }//End of for loop
 
