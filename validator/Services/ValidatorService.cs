@@ -111,8 +111,11 @@ public class ValidatorService : IValidatorService
             }
             // expected values checks - if expected values are set
             // we need to check if the field is in the expected values
-            if (validationConfig?.HasExpected ?? false && validationConfig.AllowedValues.Contains(field.Trim()) == false)
+            if ((validationConfig?.HasExpected ?? false != true) && !validationConfig.AllowedValues.Contains(field.Trim()))
             {
+                var contained = validationConfig.AllowedValues.Contains(field.Trim());
+                Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - field {field} not in expected values ({validationConfig.HasExpected}) and contained: {contained}");
+                Console.WriteLine($"ValidatorService::ProcessLine: options: {string.Join(", ", validationConfig.AllowedValues)}");
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
             }

@@ -28,8 +28,8 @@
             "isNullable": false,
             "minLength": 0,
             "maxLength": 64,
-            "formats": ["YYYY-MM-DD", "MM/DD/YYYY", "DD/MM/YYYY"],
-            "errorMessage": "Transaction date must be a valid date in the format YYYY-MM-DD."
+            "formats": ["yyyy-MM-dd", "MM/dd/yyyy", "dd/MM/yyyy"],
+            "errorMessage": "Transaction date must be a valid date format (yyyy-MM-dd, MM/dd/yyyy, or dd/MM/yyyy)."
         },
         {
             "name": "TransactionType",

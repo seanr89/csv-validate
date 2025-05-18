@@ -32,7 +32,7 @@ public class TypeValidator : ITypeValidator
     /// <returns></returns>
     public bool ValidateType(string value, string expectedType, string[] formats)
     {
-        _logger.LogInformation($"Validating type for value: {value} against expected type: {expectedType}");
+        //_logger.LogInformation($"Validating type for value: {value} against expected type: {expectedType}");
 
         // Perform the validation logic here
         // For example, you can use reflection or a switch statement to check the type
@@ -44,6 +44,8 @@ public class TypeValidator : ITypeValidator
                 return ValidateString(value);
             case "bool":
                 return ValidateBool(value);
+            case "date":
+                return ValidateDateTime(value, formats);
             case "datetime":
                 return ValidateDateTime(value, formats);
             case "double":
@@ -70,6 +72,19 @@ public class TypeValidator : ITypeValidator
     }
 
     public bool ValidateDateTime(string value, string[] formats)
+    {
+        foreach (var format in formats)
+        {
+            if (DateTime.TryParseExact(value, format, null, System.Globalization.DateTimeStyles.None, out _))
+            {
+                return true;
+            }
+        }
+        _logger.LogWarning($"Invalid DateTime value: {value} to format: {string.Join(", ", formats)}");
+        return false;
+    }
+
+    public bool ValidateDate(string value, string[] formats)
     {
         foreach (var format in formats)
         {

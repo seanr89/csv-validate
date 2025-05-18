@@ -6,10 +6,10 @@ using Spectre.Console;
 public class App{
 
     private readonly ILogger<App> _logger;
-    private readonly ValidatorService _validatorService;
+    private readonly IValidatorService _validatorService;
     private readonly SpecificationSelector _specificationSelector;
 
-    public App(ILogger<App> logger, ValidatorService validatorService, SpecificationSelector specificationSelector)
+    public App(ILogger<App> logger, IValidatorService validatorService, SpecificationSelector specificationSelector)
     {
         _logger = logger;
         _validatorService = validatorService;
