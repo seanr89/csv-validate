@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 // This class is responsible for validating different types of data
 // such as int, string, bool, DateTime, double, and decimal.
 // It uses the ILogger interface for logging validation results and errors.
-public class TypeValidator
+public class TypeValidator : ITypeValidator
 {
     private readonly ILogger<TypeValidator> _logger;
 

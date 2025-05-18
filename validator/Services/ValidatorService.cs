@@ -1,6 +1,20 @@
 
-public class ValidatorService
+public class ValidatorService : IValidatorService
 {
+    private readonly ITypeValidator _typeValidator;
+
+    public ValidatorService(ITypeValidator typeValidator)
+    {
+        _typeValidator = typeValidator;
+    }
+
+    /// <summary>
+    /// Simple job to intake a file path and a file config for processing
+    /// This will process the file and return a list of results
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <param name="fileConfig"></param>
+    /// <returns></returns>
     /// <summary>
     /// Simple job to intake a file path and a file config for processing
     /// This will process the file and return a list of results
@@ -16,7 +30,7 @@ public class ValidatorService
         List<LineResult> results = [];
 
         // Run the file through the validator for header lines if needed
-        if(fileConfig.HeaderLine)
+        if (fileConfig.HeaderLine)
         {
             // TODO: if header process is there we should also check the line config to the header positioning!
             // Process the header line
@@ -30,14 +44,14 @@ public class ValidatorService
         }
 
         // Process each line one at a time!
-        for(int i = 0; i < lines.Length; i++)
+        for (int i = 0; i < lines.Length; i++)
         {
-            if(i == 0 && fileConfig.HeaderLine)
+            if (i == 0 && fileConfig.HeaderLine)
             {
                 // Skip the header line
                 continue;
             }
-            results.Add(ProcessLine(i+1, lines[i], fileConfig));
+            results.Add(ProcessLine(i + 1, lines[i], fileConfig));
         }
         return results;
     }
@@ -198,7 +212,6 @@ public class ValidatorService
     /// <returns></returns>
     private (bool flowControl, LineResult? value) TryProcessHeader(int lineCount, string line, FileConfig fileConfig, ref LineResult result)
     {
-        //Console.WriteLine($"ValidatorService::TryProcessHeader: {lineCount}");
         // Validate the field based on the validation config
         // Shift to a dedicated function here!
         if (fileConfig.HeaderLine)
@@ -243,7 +256,7 @@ public class ValidatorService
                     v => v.Name.Equals(field, StringComparison.OrdinalIgnoreCase));
             if (validatorByName == null)
             {
-                Console.WriteLine($"ValidatorService::validateHeaders: Field {field} not found in validation configs");
+                //Console.WriteLine($"ValidatorService::validateHeaders: Field {field} not found in validation configs");
                 // If the field is not found in the validation configs, add an error result
                 results.Add(new RecordResult(lineCount, field, false, $"Header field '{field}' not found in validation configs"));
                 continue;

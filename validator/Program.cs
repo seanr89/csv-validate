@@ -15,7 +15,8 @@ var host = Host.CreateDefaultBuilder(args)
     {
         // Register your services here
         services.AddSingleton<App>();
-        services.AddTransient<ValidatorService>();
+        services.AddTransient<ITypeValidator, TypeValidator>();
+        services.AddTransient<IValidatorService, ValidatorService>();
         services.AddTransient<SpecificationSelector>();
     })
         .ConfigureLogging((context, logging) => {
