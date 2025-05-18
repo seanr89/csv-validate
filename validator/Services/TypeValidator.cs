@@ -52,7 +52,7 @@ public class TypeValidator : ITypeValidator
                 return ValidateDecimal(value);
             default:
                 _logger.LogWarning($"Unknown expected type: {expectedType}");
-                return false;
+                return true;
         }
     }
 

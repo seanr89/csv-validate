@@ -143,58 +143,11 @@ public class ValidatorService : IValidatorService
     /// <returns></returns>
     RecordResult? ProcessFieldByType(int lineCount, string field, ValidationConfig validationConfig, int fieldIndex)
     {
-        //TODO: move this to a dedicated function / or class!
-        if(validationConfig.type == "date")
+        var typeResult = _typeValidator.ValidateType(field, validationConfig.type, validationConfig.Formats);
+
+        if (!typeResult)
         {
-            // Check if the field is a valid date
-            if (!DateTime.TryParse(field, out DateTime dateValue))
-            {
-                //Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - {field} field {fieldIndex} is not a date");
-                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
-            }
-        }
-        else if(validationConfig.type == "int")
-        {
-            // Check if the field is a valid int
-            if (!int.TryParse(field, out int intValue))
-            {
-                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
-            }
-        }
-        else if(validationConfig.type == "decimal")
-        {
-            // Check if the field is a valid decimal
-            if (!decimal.TryParse(field, out decimal decimalValue))
-            {
-                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
-            }
-        }
-        else if(validationConfig.type == "string")
-        {
-            // Check if the field is a valid string
-            // No need to do anything here, just return null
-            return null;
-        }
-        else if (validationConfig.type == "bool")
-        {
-            // Check if the field is a valid bool
-            if (!bool.TryParse(field, out bool boolValue))
-            {
-                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
-            }
-        }
-        else if (validationConfig.type == "guid")
-        {
-            // Check if the field is a valid guid
-            if (!Guid.TryParse(field, out Guid guidValue))
-            {
-                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
-            }
-        }
-        else
-        {
-            // If the type is not recognized, add an error result
-            return new RecordResult(lineCount, field, false, $"Field {field} has an invalid type");
+            return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
         }
         return null;
     }
