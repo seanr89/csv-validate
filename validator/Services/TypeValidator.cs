@@ -71,6 +71,15 @@ public class TypeValidator : ITypeValidator
         }
     }
 
+    /// <summary>
+    /// Validates a DateTime value against specified formats.
+    /// This method attempts to parse the value using the provided formats.
+    /// If no formats are provided, it uses default formats like "yyyy-MM-dd", "MM/dd/yyyy", and "dd/MM/yyyy".
+    /// If the value can be parsed successfully, it returns true; otherwise, it logs a warning and returns false.
+    /// </summary>
+    /// <param name="value">key value field</param>
+    /// <param name="formats">string array of datetime formats</param>
+    /// <returns>True/False</returns>
     public bool ValidateDateTime(string value, string[]? formats)
     {
         if (formats == null || formats.Length == 0)

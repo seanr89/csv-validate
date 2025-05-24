@@ -17,7 +17,13 @@ public static class JsonHelperNewtonsoft
         {
             if (!File.Exists(filePath))
             {
-                Console.WriteLine($"Warning: File not found at path: {filePath}");
+                //Console.WriteLine($"Warning: File not found at path: {filePath}");
+                return default;
+            }
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                //Console.WriteLine("Error: File path is null or empty.");
                 return default;
             }
 
@@ -27,7 +33,7 @@ public static class JsonHelperNewtonsoft
         }
         catch (JsonException ex)
         {
-            Console.WriteLine($"Error deserializing JSON file at {filePath} (Newtonsoft.Json): {ex.Message}");
+            //Console.WriteLine($"Error deserializing JSON file at {filePath} (Newtonsoft.Json): {ex.Message}");
             return default;
         }
         catch (IOException ex)
@@ -50,7 +56,7 @@ public static class JsonHelperNewtonsoft
         {
             if (!File.Exists(filePath))
             {
-                Console.WriteLine($"Warning: File not found at path: {filePath}");
+                //Console.WriteLine($"Warning: File not found at path: {filePath}");
                 return default;
             }
 
@@ -64,12 +70,12 @@ public static class JsonHelperNewtonsoft
         }
         catch (JsonException ex)
         {
-            Console.WriteLine($"Error deserializing JSON file at {filePath} (Newtonsoft.Json): {ex.Message}");
+            //Console.WriteLine($"Error deserializing JSON file at {filePath} (Newtonsoft.Json): {ex.Message}");
             return default;
         }
         catch (IOException ex)
         {
-            Console.WriteLine($"Error reading file at {filePath}: {ex.Message}");
+            //Console.WriteLine($"Error reading file at {filePath}: {ex.Message}");
             return default;
         }
     }

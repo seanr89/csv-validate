@@ -218,7 +218,6 @@ public class ValidatorService : IValidatorService
                     v => v.Name.Equals(field, StringComparison.OrdinalIgnoreCase));
             if (validatorByName == null)
             {
-                //Console.WriteLine($"ValidatorService::validateHeaders: Field {field} not found in validation configs");
                 // If the field is not found in the validation configs, add an error result
                 results.Add(new RecordResult(lineCount, field, false, $"Header field '{field}' not found in validation configs"));
                 continue;
