@@ -65,7 +65,27 @@ public class App{
                     Console.WriteLine($"File {file} has {count} errors");
                 }
             }
-            WriteToJson(file, results);
+            // TODO: do we want to write the results to a file via csv or json?
+            if(AnsiConsole.Confirm("Do you want to write the results to file?"))
+            {
+                // ask for the file type
+                var fileTypeToWrite = CreateAndWaitForResponse("Select file type to write", new string[] { "csv", "json" });
+                if(fileTypeToWrite == "csv")
+                {
+                    // write to csv (we need to grab the records from the results)
+                    var records = results.SelectMany(r => r.RecordResults).ToList();
+                    FileWriter.TryWriteOrAppendToFile(records, $"{fileType}_results.csv");
+                }
+                else if(fileTypeToWrite == "json")
+                {
+                    // write to json
+                    WriteToJson(file, results);
+                }
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[red]Skipping writing results to file[/]");
+            }
         } // end of file loop
 
         _logger.LogInformation("App::Completed");
