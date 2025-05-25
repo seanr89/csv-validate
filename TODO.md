@@ -14,10 +14,10 @@
 - [ ] Add integration tests for end-to-end file validation
 
 ## Bugs
-- [ ] `ValidatorService.ProcessFileWithConfig` does not handle empty files gracefully
+- [x] `ValidatorService.ProcessFileWithConfig` does not handle empty files gracefully
 - [ ] `ValidatorService` header validation does not check for missing/extra columns
-- [ ] `TypeValidator.ValidateType` returns `true` for unknown types (should be `false` or configurable)
-- [ ] `TypeValidator.ValidateDateTime` and `ValidateDate` log misleading error messages when all formats fail
+- [x] `TypeValidator.ValidateType` returns `true` for unknown types (should be `false` or configurable)
+- [x] `TypeValidator.ValidateDateTime` and `ValidateDate` log misleading error messages when all formats fail
 - [ ] Error messages in validation results are not always descriptive (e.g., missing field index or value)
 - [ ] `ProcessFieldByType` in `ValidatorService` does not handle null/empty fields consistently
 

@@ -65,7 +65,7 @@ public class App{
                     Console.WriteLine($"File {file} has {count} errors");
                 }
             }
-            // TODO: do we want to write the results to a file via csv or json?
+            // Ask if we want to write the results to a file via csv or json?
             if(AnsiConsole.Confirm("Do you want to write the results to file?"))
             {
                 // ask for the file type

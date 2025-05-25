@@ -1,5 +1,3 @@
-
-
 using Microsoft.Extensions.Logging;
 
 // Dedicated to the type validation logic
@@ -54,7 +52,7 @@ public class TypeValidator : ITypeValidator
                 return ValidateDecimal(value);
             default:
                 _logger.LogWarning($"Unknown expected type: {expectedType}");
-                return true;
+                return false;
         }
     }
 
@@ -84,7 +82,7 @@ public class TypeValidator : ITypeValidator
     {
         if (formats == null || formats.Length == 0)
         {
-            formats = ["yyyy-MM-dd", "MM/dd/yyyy", "dd/MM/yyyy"]; // Default formats
+            formats = ["yyyy-MM-dd HH:mm:ss", "MM/dd/yyyy HH:mm:ss", "dd/MM/yyyy HH:mm:ss"]; // Default formats
         }
         foreach (var format in formats)
         {
@@ -93,7 +91,7 @@ public class TypeValidator : ITypeValidator
                 return true;
             }
         }
-        _logger.LogWarning($"Invalid DateTime value: {value} to format: {string.Join(", ", formats)}");
+        _logger.LogWarning($"Invalid DateTime value: '{value}' did not match any of the formats: [{string.Join(", ", formats)}]");
         return false;
     }
 
@@ -111,7 +109,7 @@ public class TypeValidator : ITypeValidator
             }
         }
 
-        _logger.LogWarning($"Invalid DateTime value: {value}");
+        _logger.LogWarning($"Invalid Date value: '{value}' did not match any of the formats: [{string.Join(", ", formats)}]");
         return false;
     }
 

@@ -6,7 +6,7 @@ using CsvHelper.TypeConversion;
 public static class FileWriter
 {
 
-    public static void CheckAndCreateDirectory(string directoryPath = "./files"){
+    public static void CheckAndCreateDirectory(string directoryPath = "../files/output"){
         if(!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);
@@ -69,7 +69,7 @@ public static class FileWriter
                 Delimiter = "|"
             };
             // Append to file
-            using (var stream = File.Open($"./files/{fileName}", FileMode.Append))
+            using (var stream = File.Open($"../files/output/{fileName}", FileMode.Append))
             using (var writer = new StreamWriter(stream))
             using (var csv = new CsvWriter(writer, config))
             {
@@ -95,7 +95,7 @@ public static class FileWriter
     /// <returns></returns>
     static bool FileExists(string fileName = "transactions.csv")
     {
-        if(File.Exists($"./files/{fileName}"))
+        if(File.Exists($"../files/output/{fileName}"))
         {
             return true;
         }
