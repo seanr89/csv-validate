@@ -1,9 +1,13 @@
 public class ValidatorService : IValidatorService
 {
     private readonly ITypeValidator _typeValidator;
+    private readonly IHeaderValidator _headerValidator;
 
-    public ValidatorService(ITypeValidator typeValidator)
+    public ValidatorService(ITypeValidator typeValidator, IHeaderValidator headerValidator)
     {
+        _headerValidator = headerValidator;
+        // Inject the type validator to handle type-specific validations
+        // This will be used to validate the field types based on the validation config
         _typeValidator = typeValidator;
     }
 
@@ -38,6 +42,8 @@ public class ValidatorService : IValidatorService
         // Run the file through the validator for header lines if needed
         if (fileConfig.HeaderLine)
         {
+            //var headerResults = _headerValidator.Validate(1, lines[0], fileConfig);
+
             // TODO: if header process is there we should also check the line config to the header positioning!
             // Process the header line
             var line = lines[0];
@@ -158,8 +164,22 @@ public class ValidatorService : IValidatorService
     /// <returns></returns>
     RecordResult? ProcessFieldByType(int lineCount, string field, ValidationConfig validationConfig, int fieldIndex)
     {
-        var typeResult = _typeValidator.ValidateType(field, validationConfig.type, validationConfig.Formats);
+        // Consistent handling for null/empty fields
+        if (string.IsNullOrEmpty(field))
+        {
+            if (validationConfig.IsNullable)
+            {
+                // Valid: nullable and empty
+                return new RecordResult(lineCount, field, true, string.Empty);
+            }
+            else
+            {
+                // Invalid: not nullable and empty
+                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
+            }
+        }
 
+        var typeResult = _typeValidator.ValidateType(field, validationConfig.type, validationConfig.Formats);
         if (!typeResult)
         {
             return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
@@ -184,7 +204,7 @@ public class ValidatorService : IValidatorService
         // Shift to a dedicated function here!
         if (fileConfig.HeaderLine)
         {
-            var headerResult = validateHeaders(lineCount, line, fileConfig);
+            var headerResult = _headerValidator.Validate(lineCount, line, fileConfig);//validateHeaders(lineCount, line, fileConfig);
             if (headerResult.Count > 0)
             {
                 result = new LineResult(lineCount, false, "Header line is invalid");
@@ -216,6 +236,19 @@ public class ValidatorService : IValidatorService
         var results = new List<RecordResult>();
         var fields = line.Split(fileConfig.Delimiter);
 
+        // Check for missing or extra columns in header
+        var expectedCount = fileConfig.ValidationConfigs.Count;
+        if (fields.Length != expectedCount)
+        {
+            if (fields.Length < expectedCount)
+            {
+                results.Add(new RecordResult(lineCount, string.Join(fileConfig.Delimiter, fields), false, $"Header is missing {expectedCount - fields.Length} column(s)"));
+            }
+            else
+            {
+                results.Add(new RecordResult(lineCount, string.Join(fileConfig.Delimiter, fields), false, $"Header has {fields.Length - expectedCount} extra column(s)"));
+            }
+        }
         // here we now want to invoke the validation for each field
         for(int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
         {
