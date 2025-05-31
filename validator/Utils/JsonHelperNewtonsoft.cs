@@ -33,7 +33,7 @@ public static class JsonHelperNewtonsoft
         }
         catch (JsonException ex)
         {
-            //Console.WriteLine($"Error deserializing JSON file at {filePath} (Newtonsoft.Json): {ex.Message}");
+            Console.WriteLine($"Error deserializing JSON file at {filePath} (Newtonsoft.Json): {ex.Message}");
             return default;
         }
         catch (IOException ex)
@@ -70,12 +70,12 @@ public static class JsonHelperNewtonsoft
         }
         catch (JsonException ex)
         {
-            //Console.WriteLine($"Error deserializing JSON file at {filePath} (Newtonsoft.Json): {ex.Message}");
+            Console.WriteLine($"Error deserializing JSON file at {filePath} (Newtonsoft.Json): {ex.Message}");
             return default;
         }
         catch (IOException ex)
         {
-            //Console.WriteLine($"Error reading file at {filePath}: {ex.Message}");
+            Console.WriteLine($"Error reading file at {filePath}: {ex.Message}");
             return default;
         }
     }

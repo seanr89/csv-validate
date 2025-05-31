@@ -20,7 +20,7 @@ public class App{
     {
         _logger.LogInformation("App::Run");
 
-        string fileType = CreateAndWaitForResponse("Select file type", new string[] { "transactions", "account", "customer" });
+        string fileType = CreateAndWaitForResponse("Select file type", new string[] { "transactions", "account", "customer", "card" });
         //Console.WriteLine($"You selected {fileType}");
 
         var fileConfig = _specificationSelector.GetFileConfig(fileType);
@@ -73,7 +73,7 @@ public class App{
                 if(fileTypeToWrite == "csv")
                 {
                     // write to csv (we need to grab the records from the results)
-                    var records = results.SelectMany(r => r.RecordResults).ToList();
+                    var records = results.SelectMany(r => r.RecordResults ?? Enumerable.Empty<RecordResult>()).ToList();
                     FileWriter.TryWriteOrAppendToFile(records, $"{fileType}_results.csv");
                 }
                 else if(fileTypeToWrite == "json")

@@ -132,7 +132,7 @@ public class ValidatorService : IValidatorService
             // This is very messy and should be moved to a dedicated function
             // expected values checks - if expected values are set
             // we need to check if the field is in the expected values
-            if ((validationConfig?.HasExpected ?? false != true) && (validationConfig.AllowedValues != null && !validationConfig.AllowedValues.Contains(field.Trim())))
+            if ((validationConfig?.HasExpected ?? false != true) && (validationConfig?.AllowedValues != null && !validationConfig.AllowedValues.Contains(field.Trim())))
             {
                 result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
                 continue;
