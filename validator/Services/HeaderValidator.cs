@@ -1,15 +1,8 @@
 
 using Microsoft.Extensions.Logging;
 
-public class HeaderValidator : IHeaderValidator
+public class HeaderValidator(ILogger<HeaderValidator> _logger) : IHeaderValidator
 {
-    private readonly ILogger<HeaderValidator> _logger;
-
-    public HeaderValidator(ILogger<HeaderValidator> logger)
-    {
-        _logger = logger;
-    }
-
     /// <summary>
     /// Validates the headers of the file based on the provided file configuration.
     /// This method is called when the file is being processed.

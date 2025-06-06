@@ -6,11 +6,24 @@ public class SpecificationSelector
 {
     List<FileConfig> _fileConfigs = [];
     
+    /// <summary>
+    /// SpecificationSelector is responsible for loading file configurations from a directory.
+    /// It scans the specified directory for JSON files, loads their configurations,
+    /// and provides methods to retrieve file configurations based on file type.
+    /// </summary>
     public SpecificationSelector()
     {
         LoadAllFilePathsFromDirectory("Specifications");
     }
 
+    /// <summary>
+    /// Gets the file configuration for a specific file type.
+    /// This method searches through the loaded file configurations and returns the one that matches the specified file type.
+    /// If no matching file configuration is found, it returns null and logs an error message.
+    /// This is used to validate files based on their type.
+    /// </summary>
+    /// <param name="fileType">string param of said file type</param>
+    /// <returns></returns>
     public FileConfig? GetFileConfig(string fileType)
     {
         Console.WriteLine($"Getting file config for {fileType}");
@@ -56,11 +69,14 @@ public class SpecificationSelector
     }
 
     /// <summary>
-    /// 
+    /// Runs the file config loader for a specific file path.
+    /// This method reads a JSON file from the specified path, deserializes it into a FileConfig object,
+    /// and returns the FileConfig object.
+    /// If the file cannot be read or deserialized, it returns null.
     /// </summary>
-    /// <param name="filePath"></param>
-    /// <returns></returns>
-    FileConfig? LoadFileConfig(string filePath)
+    /// <param name="filePath">filePathing of the expected file to loaded</param>
+    /// <returns>nullable FileConfig object model</returns>
+    static FileConfig? LoadFileConfig(string filePath)
     {
         // Load the file config from the JSON file
         var jsonString = File.ReadAllText(filePath);

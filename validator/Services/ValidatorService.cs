@@ -42,16 +42,10 @@ public class ValidatorService : IValidatorService
         // Run the file through the validator for header lines if needed
         if (fileConfig.HeaderLine)
         {
-            //var headerResults = _headerValidator.Validate(1, lines[0], fileConfig);
-
             // TODO: if header process is there we should also check the line config to the header positioning!
-            // Process the header line
-            var line = lines[0];
             var lineCount = 1; // Line numbers are 1-based
-            // Validate the field based on the validation config
-            // Shift to a dedicated function here!
             var result = new LineResult(lineCount, false, string.Empty);
-            (bool _, LineResult? value) = TryProcessHeader(lineCount, line, fileConfig, ref result);
+            (bool _, LineResult? value) = TryProcessHeader(lineCount, lines[0], fileConfig, ref result);
             results.Add(result);
         }
 
@@ -201,24 +195,18 @@ public class ValidatorService : IValidatorService
     private (bool flowControl, LineResult? value) TryProcessHeader(int lineCount, string line, FileConfig fileConfig, ref LineResult result)
     {
         // Validate the field based on the validation config
-        // Shift to a dedicated function here!
-        if (fileConfig.HeaderLine)
+        var headerResult = _headerValidator.Validate(lineCount, line, fileConfig);
+        if (headerResult.Count > 0)
         {
-            var headerResult = _headerValidator.Validate(lineCount, line, fileConfig);//validateHeaders(lineCount, line, fileConfig);
-            if (headerResult.Count > 0)
-            {
-                result = new LineResult(lineCount, false, "Header line is invalid");
-                result.AddRecordResults(headerResult);
-                return (flowControl: false, value: result);
-            }
-            else
-            {
-                result = new LineResult(lineCount, true, string.Empty);
-            }
+            result = new LineResult(lineCount, false, "Header line is invalid");
+            result.AddRecordResults(headerResult);
             return (flowControl: false, value: result);
         }
-
-        return (flowControl: true, value: null);
+        else
+        {
+            result = new LineResult(lineCount, true, string.Empty);
+        }
+        return (flowControl: false, value: result);
     }
 
     /// <summary>

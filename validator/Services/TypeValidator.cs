@@ -30,10 +30,6 @@ public class TypeValidator : ITypeValidator
     /// <returns></returns>
     public bool ValidateType(string value, string expectedType, string[]? formats)
     {
-        //_logger.LogInformation($"Validating type for value: {value} against expected type: {expectedType}");
-
-        // Perform the validation logic here
-        // For example, you can use reflection or a switch statement to check the type
         switch (expectedType.ToLower())
         {
             case "int":
@@ -56,6 +52,11 @@ public class TypeValidator : ITypeValidator
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public bool ValidateBool(string value)
     {
         if (bool.TryParse(value, out bool result))
