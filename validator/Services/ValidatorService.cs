@@ -24,8 +24,9 @@ public class ValidatorService : IValidatorService
     /// </summary>
     /// <param name="filePath"></param>
     /// <param name="fileConfig"></param>
+    /// <param name="summary"></param>
     /// <returns></returns>
-    public List<LineResult> ProcessFileWithConfig(string filePath, FileConfig fileConfig)
+    public List<LineResult> ProcessFileWithConfig(string filePath, FileConfig fileConfig, Summary summary)
     {
         Console.WriteLine($"ValidatorService::ProcessFileWithConfig: {filePath}");
         // Load the file and read the lines all together

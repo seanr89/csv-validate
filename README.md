@@ -1,5 +1,5 @@
 # csv-validate
-tooling to test csv file parsing and validation
+tooling to test csv file parsing and validation via a .json specification format
 
 
 ## Status Badges

@@ -30,7 +30,7 @@ public class App{
             return;
         }
 
-        if(fileConfig.ValidationConfigs.Count == 0)
+        if (fileConfig.ValidationConfigs.Count == 0)
         {
             Console.WriteLine($"Error: No validation configs found for {fileType} - ending program");
             return;
@@ -40,25 +40,27 @@ public class App{
 
         // go grab the files for the type
         var files = Directory.GetFiles("../files/", $"{fileType}.csv");
-        if(files.Length == 0)
+        if (files.Length == 0)
         {
             Console.WriteLine($"Error: No files found for {fileType}");
             return;
         }
-        
+
         AnsiConsole.MarkupLine($"[green]Found {files.Length} files for {fileType}[/]");
 
         // now we want to process each file
         foreach (var file in files)
         {
+            Summary summary = new Summary(0, 0, 0, "N/A");
             //Console.WriteLine($"Processing file {file}");
-            var results = _validatorService.ProcessFileWithConfig(file, fileConfig);
+            var results = _validatorService.ProcessFileWithConfig(file, fileConfig, summary);
             if (results == null)
             {
                 Console.WriteLine($"Error: Unable to process file {file}");
                 continue;
             }
-            else{
+            else
+            {
                 var count = results.Count(r => r.Valid == false);
                 if (count > 0)
                 {
@@ -66,17 +68,17 @@ public class App{
                 }
             }
             // Ask if we want to write the results to a file via csv or json?
-            if(AnsiConsole.Confirm("Do you want to write the results to file?"))
+            if (AnsiConsole.Confirm("Do you want to write the results to file?"))
             {
                 // ask for the file type
                 var fileTypeToWrite = CreateAndWaitForResponse("Select file type to write", new string[] { "csv", "json" });
-                if(fileTypeToWrite == "csv")
+                if (fileTypeToWrite == "csv")
                 {
                     // write to csv (we need to grab the records from the results)
                     var records = results.SelectMany(r => r.RecordResults ?? Enumerable.Empty<RecordResult>()).ToList();
                     FileWriter.TryWriteOrAppendToFile(records, $"{fileType}_results.csv");
                 }
-                else if(fileTypeToWrite == "json")
+                else if (fileTypeToWrite == "json")
                 {
                     // write to json
                     WriteToJson(file, results);
@@ -85,7 +87,11 @@ public class App{
             else
             {
                 AnsiConsole.MarkupLine("[red]Skipping writing results to file[/]");
+                continue;
             }
+
+            // Print summary of results
+            Console.WriteLine("Summary of results: {0}", summary.ToString());
         } // end of file loop
 
         _logger.LogInformation("App::Completed");

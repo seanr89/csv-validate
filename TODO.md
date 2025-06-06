@@ -1,4 +1,5 @@
 # TODO & Task List
+Auto-generated Task and TODO list of records scanned via github process
 
 ## Features
 - [ ] Refactor `ValidatorService` to use dependency injection for validators (e.g., `ITypeValidator`)
