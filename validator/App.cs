@@ -84,11 +84,11 @@ public class App{
                     WriteToJson(file, results);
                 }
             }
-            else
-            {
-                AnsiConsole.MarkupLine("[red]Skipping writing results to file[/]");
-                continue;
-            }
+            // else
+            // {
+            //     AnsiConsole.MarkupLine("[red]Skipping writing results to file[/]");
+            //     continue;
+            // }
 
             // Print summary of results
             Console.WriteLine("Summary of results: {0}", summary.ToString());

@@ -8,7 +8,6 @@ IConfiguration config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
     .AddEnvironmentVariables()
     .Build();
-
     
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
@@ -19,6 +18,9 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddTransient<ITypeValidator, TypeValidator>();
         services.AddTransient<IValidatorService, ValidatorService>();
         services.AddTransient<SpecificationSelector>();
+
+        // Bind the RunSettings section
+        services.Configure<RunSettings>(config.GetSection("RunSettings"));
     })
         .ConfigureLogging((context, logging) => {
         logging.AddConfiguration(context.Configuration.GetSection("Logging"));

@@ -7,7 +7,7 @@ public class LineResult(int lineCount, bool valid, string? message)
     public List<RecordResult>? RecordResults { get; set; } = [];
 
     /// <summary>
-    /// simple add simple result for a record object
+    /// Add single result to results array
     /// </summary>
     /// <param name="recordResult"></param>
     public void AddRecordResult(RecordResult? recordResult)
@@ -16,20 +16,18 @@ public class LineResult(int lineCount, bool valid, string? message)
         {
             return;
         }
-        RecordResults ??= new List<RecordResult>();
+        RecordResults ??= [];
         RecordResults.Add(recordResult);
     }
 
     /// <summary>
-    /// 
+    /// Allows bulk addition of results
     /// </summary>
-    /// <param name="recordResults"></param>
+    /// <param name="recordResults">expected at least 1 record in results</param>
     public void AddRecordResults(List<RecordResult> recordResults)
     {
-        if (RecordResults == null)
-        {
-            RecordResults = new List<RecordResult>();
-        }
-        RecordResults.AddRange(recordResults);
+        RecordResults ??= [];
+        if(recordResults.Count > 0)
+            RecordResults.AddRange(recordResults);
     }
 }
