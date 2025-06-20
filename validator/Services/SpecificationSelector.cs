@@ -2,7 +2,7 @@
 
 using Newtonsoft.Json;
 
-public class SpecificationSelector
+public class SpecificationSelector : ISpecificationSelector
 {
     List<FileConfig> _fileConfigs = [];
     
@@ -46,6 +46,11 @@ public class SpecificationSelector
     void LoadAllFilePathsFromDirectory(string directoryPath)
     {
         Console.WriteLine($"Loading file paths from directory: {directoryPath}");
+        if (!Directory.Exists(directoryPath))
+        {
+            Console.WriteLine($"Error: Directory {directoryPath} does not exist.");
+            return;
+        }
         // Get all files in the directory
         var files = Directory.GetFiles(directoryPath);
 

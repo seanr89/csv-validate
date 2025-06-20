@@ -17,7 +17,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddTransient<IHeaderValidator, HeaderValidator>();
         services.AddTransient<ITypeValidator, TypeValidator>();
         services.AddTransient<IValidatorService, ValidatorService>();
-        services.AddTransient<SpecificationSelector>();
+        services.AddTransient<ISpecificationSelector, SpecificationSelector>();
 
         // Bind the RunSettings section
         services.Configure<RunSettings>(config.GetSection("RunSettings"));

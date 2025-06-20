@@ -84,7 +84,7 @@ namespace validator.Tests
         [InlineData("123.45", "decimal", null, true)]
         [InlineData("notadecimal", "decimal", null, false)]
         [InlineData("any string", "string", null, true)]
-        [InlineData("foo", "unknown", null, true)]
+        [InlineData("foo", "unknown", null, false)]
         public void ValidateType_Works(string value, string expectedType, string[]? formats, bool expected)
         {
             var result = _validator.ValidateType(value, expectedType, formats);

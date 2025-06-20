@@ -3,6 +3,8 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 
+namespace validator.Utils;
+
 public static class JsonHelperNewtonsoft
 {
     /// <summary>
