@@ -7,9 +7,9 @@ public class App{
 
     private readonly ILogger<App> _logger;
     private readonly IValidatorService _validatorService;
-    private readonly SpecificationSelector _specificationSelector;
+    private readonly ISpecificationSelector _specificationSelector;
 
-    public App(ILogger<App> logger, IValidatorService validatorService, SpecificationSelector specificationSelector)
+    public App(ILogger<App> logger, IValidatorService validatorService, ISpecificationSelector specificationSelector)
     {
         _logger = logger;
         _validatorService = validatorService;
@@ -71,27 +71,31 @@ public class App{
             if (AnsiConsole.Confirm("Do you want to write the results to file?"))
             {
                 // ask for the file type
-                var fileTypeToWrite = CreateAndWaitForResponse("Select file type to write", new string[] { "csv", "json" });
+                var fileTypeToWrite = CreateAndWaitForResponse("Select file type to write", ["csv", "json"]);
                 if (fileTypeToWrite == "csv")
                 {
+                    // if the file had a header - remove that line from the results
+                    if (fileConfig.HeaderLine)
+                    {
+                        results.RemoveAt(0);
+                    }
+
                     // write to csv (we need to grab the records from the results)
                     var records = results.SelectMany(r => r.RecordResults ?? Enumerable.Empty<RecordResult>()).ToList();
                     FileWriter.TryWriteOrAppendToFile(records, $"{fileType}_results.csv");
+                    return;
                 }
-                else if (fileTypeToWrite == "json")
+
+                if (fileTypeToWrite == "json")
                 {
                     // write to json
                     WriteToJson(file, results);
+                    return;
                 }
             }
-            // else
-            // {
-            //     AnsiConsole.MarkupLine("[red]Skipping writing results to file[/]");
-            //     continue;
-            // }
 
             // Print summary of results
-            Console.WriteLine("Summary of results: {0}", summary.ToString());
+                Console.WriteLine("Summary of results: {0}", summary.ToString());
         } // end of file loop
 
         _logger.LogInformation("App::Completed");

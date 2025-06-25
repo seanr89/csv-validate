@@ -6,7 +6,7 @@ using CsvHelper.TypeConversion;
 public static class FileWriter
 {
 
-    public static void CheckAndCreateDirectory(string directoryPath = "../files/output"){
+    public static void CheckAndCreateDirectory(string directoryPath = "../files/outputs"){
         if(!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);
@@ -43,7 +43,7 @@ public static class FileWriter
                 HasHeaderRecord = true,
                 Delimiter = "|"
             };
-            using (var writer = new StreamWriter($"./files/{fileName}"))
+            using (var writer = new StreamWriter($"../files/outputs/{fileName}"))
             using (var csv = new CsvWriter(writer, config))
             {
                 var options = new TypeConverterOptions { Formats = ["dd/MM/yyyy"] };
@@ -69,13 +69,22 @@ public static class FileWriter
                 Delimiter = "|"
             };
             // Append to file
-            using (var stream = File.Open($"../files/output/{fileName}", FileMode.Append))
-            using (var writer = new StreamWriter(stream))
-            using (var csv = new CsvWriter(writer, config))
+            try
+            {    
+                using (var stream = File.Open($"../files/outputs/{fileName}", FileMode.Append))
+                using (var writer = new StreamWriter(stream))
+                using (var csv = new CsvWriter(writer, config))
+                {
+                    var options = new TypeConverterOptions { Formats = ["dd/MM/yyyy"] };
+                    csv.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);
+                    csv.WriteRecords(data);
+                }
+            }
+            catch( Exception e)
             {
-                var options = new TypeConverterOptions { Formats = ["dd/MM/yyyy"] };
-                csv.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);       
-                csv.WriteRecords(data);
+                // Log error
+                Console.WriteLine($"Error opening file for appending: {e.Message}");
+                return;
             }
         }
         catch(Exception e)
@@ -95,7 +104,7 @@ public static class FileWriter
     /// <returns></returns>
     static bool FileExists(string fileName = "transactions.csv")
     {
-        if(File.Exists($"../files/output/{fileName}"))
+        if(File.Exists($"../files/outputs/{fileName}"))
         {
             return true;
         }

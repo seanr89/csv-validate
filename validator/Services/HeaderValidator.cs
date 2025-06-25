@@ -8,9 +8,9 @@ public class HeaderValidator(ILogger<HeaderValidator> _logger) : IHeaderValidato
     /// This method is called when the file is being processed.
     /// It checks if the headers match the expected format and validates each field
     /// </summary>
-    /// <param name="lineCount"></param>
-    /// <param name="line"></param>
-    /// <param name="fileConfig"></param>
+    /// <param name="lineCount">current line increment being scanned</param>
+    /// <param name="line">line string data</param>
+    /// <param name="fileConfig">overall file configuration</param>
     /// <returns></returns>
     public List<RecordResult> Validate(int lineCount, string line, FileConfig fileConfig)
     {
