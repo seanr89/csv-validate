@@ -97,44 +97,47 @@ public class ValidatorService : IValidatorService
                 result = new LineResult(lineCount, false, $"Field index {fieldIndex} not found in validation configs");
                 return result;
             }
+            var activeValidationConfig = validationConfig;
 
             // Now lets to null check?
-            if (string.IsNullOrEmpty(field) && !validationConfig.IsNullable)
+            if (string.IsNullOrEmpty(field) && !activeValidationConfig.IsNullable)
             {
-                result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
                 continue;
             }
 
             // check for null with allowance and skip if needed
-            if (string.IsNullOrEmpty(field) && validationConfig.IsNullable)
+            if (string.IsNullOrEmpty(field) && activeValidationConfig.IsNullable)
             {
                 result.AddRecordResult(new RecordResult(lineCount, field, true, string.Empty));
                 continue;
             }
 
             // minlength and max length checks
-            if (validationConfig?.minLength != null && field.Length < validationConfig.minLength)
+            if (activeValidationConfig.minLength != null && field.Length < activeValidationConfig.minLength)
             {
-                result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
                 continue;
             }
-            if (validationConfig?.maxLength != null && field.Length > validationConfig.maxLength)
+            if (activeValidationConfig.maxLength != null && field.Length > activeValidationConfig.maxLength)
             {
-                result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
                 continue;
             }
 
             // This is very messy and should be moved to a dedicated function
             // expected values checks - if expected values are set
             // we need to check if the field is in the expected values
-            if ((validationConfig?.HasExpected ?? false != true) && (validationConfig?.AllowedValues != null && !validationConfig.AllowedValues.Contains(field.Trim())))
+            if ((activeValidationConfig.HasExpected != true) &&
+                activeValidationConfig.AllowedValues != null
+                    && !activeValidationConfig.AllowedValues.Contains(field.Trim()))
             {
-                result.AddRecordResult(new RecordResult(lineCount, field, false, validationConfig.ErrorMessage));
+                result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
                 continue;
             }
 
             // move validationConfig type check to dedicated function etc...
-            result.AddRecordResult(ProcessFieldByType(lineCount, field, validationConfig, fieldIndex));
+            result.AddRecordResult(ProcessFieldByType(lineCount, field, activeValidationConfig, fieldIndex));
         }//End of for loop
 
         // If we get here without any results, we are valid
@@ -153,9 +156,9 @@ public class ValidatorService : IValidatorService
     /// and return a result
     /// </summary>
     /// <param name="lineCount">current line location!</param>
-    /// <param name="field"></param>
-    /// <param name="validationConfig"></param>
-    /// <param name="fieldIndex"></param>
+    /// <param name="field">field param to be parsed and validated</param>
+    /// <param name="validationConfig">the configuration file to be used to search</param>
+    /// <param name="fieldIndex">unsure</param>
     /// <returns></returns>
     RecordResult? ProcessFieldByType(int lineCount, string field, ValidationConfig validationConfig, int fieldIndex)
     {
