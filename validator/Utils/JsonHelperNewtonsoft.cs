@@ -1,7 +1,4 @@
-using System;
-using System.IO;
 using Newtonsoft.Json;
-using System.Threading.Tasks;
 
 namespace validator.Utils;
 
@@ -19,13 +16,11 @@ public static class JsonHelperNewtonsoft
         {
             if (!File.Exists(filePath))
             {
-                //Console.WriteLine($"Warning: File not found at path: {filePath}");
                 return default;
             }
 
             if (string.IsNullOrWhiteSpace(filePath))
             {
-                //Console.WriteLine("Error: File path is null or empty.");
                 return default;
             }
 
@@ -58,17 +53,14 @@ public static class JsonHelperNewtonsoft
         {
             if (!File.Exists(filePath))
             {
-                //Console.WriteLine($"Warning: File not found at path: {filePath}");
                 return default;
             }
 
-            using (StreamReader file = File.OpenText(filePath))
-            using (JsonTextReader reader = new JsonTextReader(file))
-            {
-                JsonSerializer serializer = new JsonSerializer();
-                T? result = await Task.Run(() => serializer.Deserialize<T>(reader));
-                return result;
-            }
+            using StreamReader file = File.OpenText(filePath);
+            using JsonTextReader reader = new(file);
+            JsonSerializer serializer = new();
+            T? result = await Task.Run(() => serializer.Deserialize<T>(reader));
+            return result;
         }
         catch (JsonException ex)
         {

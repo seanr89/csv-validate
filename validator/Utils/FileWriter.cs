@@ -6,7 +6,7 @@ using CsvHelper.TypeConversion;
 public static class FileWriter
 {
 
-    public static void CheckAndCreateDirectory(string directoryPath = "../files/outputs"){
+    private static void CheckAndCreateDirectory(string directoryPath = "../files/outputs"){
         if(!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);

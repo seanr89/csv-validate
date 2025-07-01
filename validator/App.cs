@@ -3,7 +3,10 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Spectre.Console;
 
-public class App{
+namespace validator;
+
+public class App
+{
 
     private readonly ILogger<App> _logger;
     private readonly IValidatorService _validatorService;
@@ -16,19 +19,18 @@ public class App{
         _specificationSelector = specificationSelector;
     }
 
+    /// <summary>
+    /// Entry point for application to execute
+    /// </summary>
     public void Run()
     {
         _logger.LogInformation("App::Run");
 
         string fileType = CreateAndWaitForResponse("Select file type", new string[] { "transactions", "account", "customer", "card" });
-        //Console.WriteLine($"You selected {fileType}");
 
         var fileConfig = _specificationSelector.GetFileConfig(fileType);
         if (fileConfig == null)
-        {
-            Console.WriteLine($"Error: No config found for {fileType} - ending program");
             return;
-        }
 
         if (fileConfig.ValidationConfigs.Count == 0)
         {
@@ -95,7 +97,7 @@ public class App{
             }
 
             // Print summary of results
-                Console.WriteLine("Summary of results: {0}", summary.ToString());
+            Console.WriteLine("Summary of results: {0}", summary.ToString());
         } // end of file loop
 
         _logger.LogInformation("App::Completed");
