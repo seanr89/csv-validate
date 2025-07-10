@@ -53,14 +53,24 @@ public class ValidatorService : IValidatorService
         // Process each line one at a time!
         for (int i = 0; i < lines.Length; i++)
         {
-            if (i == 0 && fileConfig.HeaderLine)
-            {
-                // Skip the header line
+            bool isHeader = IsStartAndHeaderLine(fileConfig, i);
+            if (!isHeader)
                 continue;
-            }
+            
             results.Add(ProcessLine(i + 1, lines[i], fileConfig));
         }
         return results;
+    }
+
+    private static bool IsStartAndHeaderLine(FileConfig fileConfig, int i)
+    {
+        if (i == 0 && fileConfig.HeaderLine)
+        {
+            // Skip the header line
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -113,15 +123,9 @@ public class ValidatorService : IValidatorService
                 continue;
             }
 
-            // minlength and max length checks
-            if (activeValidationConfig.minLength != null && field.Length < activeValidationConfig.minLength)
+            bool flowControl = ProcessMinandMaxLengths(lineCount, result, field, activeValidationConfig);
+            if (!flowControl)
             {
-                result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
-                continue;
-            }
-            if (activeValidationConfig.maxLength != null && field.Length > activeValidationConfig.maxLength)
-            {
-                result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
                 continue;
             }
 
@@ -141,13 +145,38 @@ public class ValidatorService : IValidatorService
         }//End of for loop
 
         // If we get here without any results, we are valid
-        if(result.RecordResults == null || result.RecordResults.Count == 0)
+        if (result.RecordResults == null || result.RecordResults.Count == 0)
         {
             result.Valid = true;
             result.Message = "Line is valid";
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="lineCount"></param>
+    /// <param name="result"></param>
+    /// <param name="field"></param>
+    /// <param name="activeValidationConfig"></param>
+    /// <returns></returns>
+    private static bool ProcessMinandMaxLengths(int lineCount, LineResult result, string field, ValidationConfig activeValidationConfig)
+    {
+        // minlength and max length checks
+        if (activeValidationConfig.minLength != null && field.Length < activeValidationConfig.minLength)
+        {
+            result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
+            return false;
+        }
+        if (activeValidationConfig.maxLength != null && field.Length > activeValidationConfig.maxLength)
+        {
+            result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -159,7 +188,7 @@ public class ValidatorService : IValidatorService
     /// <param name="field">field param to be parsed and validated</param>
     /// <param name="validationConfig">the configuration file to be used to search</param>
     /// <param name="fieldIndex">unsure</param>
-    /// <returns></returns>
+    /// <returns>nullable record result</returns>
     RecordResult? ProcessFieldByType(int lineCount, string field, ValidationConfig validationConfig, int fieldIndex)
     {
         // Consistent handling for null/empty fields
@@ -170,14 +199,11 @@ public class ValidatorService : IValidatorService
                 // Valid: nullable and empty
                 return new RecordResult(lineCount, field, true, string.Empty);
             }
-            else
-            {
-                // Invalid: not nullable and empty
-                return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
-            }
+            // Invalid: not nullable and empty
+            return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
         }
 
-        var typeResult = _typeValidator.ValidateType(field, validationConfig.type, validationConfig.Formats);
+        bool typeResult = _typeValidator.ValidateType(field, validationConfig.type, validationConfig.Formats);
         if (!typeResult)
         {
             return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
@@ -190,11 +216,10 @@ public class ValidatorService : IValidatorService
     /// This will check the header line against the validation config
     /// and return a result
     /// </summary>
-    /// <param name="flowControl"></param>
-    /// <param name="lineCount"></param>
-    /// <param name="line"></param>
-    /// <param name="fileConfig"></param>
-    /// <param name="result"></param>
+    /// <param name="lineCount">current line location!</param>
+    /// <param name="line">line param to be parsed and validated</param>
+    /// <param name="fileConfig">configuration element</param>
+    /// <param name="result"/>ref param</param>
     /// <returns></returns>
     private (bool flowControl, LineResult? value) TryProcessHeader(int lineCount, string line, FileConfig fileConfig, ref LineResult result)
     {
