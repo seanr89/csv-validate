@@ -53,24 +53,28 @@ public class ValidatorService : IValidatorService
         // Process each line one at a time!
         for (int i = 0; i < lines.Length; i++)
         {
-            bool isHeader = IsStartAndHeaderLine(fileConfig, i);
-            if (!isHeader)
+            // If the line should not be processed (i.e., it's a header), skip it.
+            if (!ShouldProcessLine(fileConfig, i))
                 continue;
             
             results.Add(ProcessLine(i + 1, lines[i], fileConfig));
         }
         return results;
     }
-
-    private static bool IsStartAndHeaderLine(FileConfig fileConfig, int i)
+    
+    /// <summary>
+    /// Determines if a line at a given index should be processed as a data row.
+    /// Skips the first line if it is configured as a header.
+    /// </summary>
+    /// <param name="fileConfig">The file configuration.</param>
+    /// <param name="lineIndex">The zero-based index of the line.</param>
+    /// <returns>False if the line is a header and should be skipped, otherwise true.</returns>
+    private static bool ShouldProcessLine(FileConfig fileConfig, int lineIndex)
     {
-        if (i == 0 && fileConfig.HeaderLine)
-        {
-            // Skip the header line
-            return false;
-        }
-
-        return true;
+        // It's a header line if it's the first line (index 0) and HeaderLine is true.
+        bool isHeader = lineIndex == 0 && fileConfig.HeaderLine;
+        // Process the line only if it's NOT a header.
+        return !isHeader;
     }
 
     /// <summary>
