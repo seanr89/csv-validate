@@ -7,7 +7,6 @@ namespace validator;
 
 public class App
 {
-
     private readonly ILogger<App> _logger;
     private readonly IValidatorService _validatorService;
     private readonly ISpecificationSelector _specificationSelector;
@@ -20,13 +19,13 @@ public class App
     }
 
     /// <summary>
-    /// Entry point for application to execute
+    /// Entry point for application to execute jobs
     /// </summary>
     public void Run()
     {
         _logger.LogInformation("App::Run");
 
-        string fileType = CreateAndWaitForResponse("Select file type", new string[] { "transactions", "account", "customer", "card" });
+        string fileType = CreateAndWaitForResponse("Select file type", ["transactions", "account", "customer", "card"]);
 
         var fileConfig = _specificationSelector.GetFileConfig(fileType);
         if (fileConfig == null)

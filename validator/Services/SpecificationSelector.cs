@@ -1,10 +1,8 @@
-
-
 using Newtonsoft.Json;
 
 public class SpecificationSelector : ISpecificationSelector
 {
-    List<FileConfig> _fileConfigs = [];
+    readonly List<FileConfig> _fileConfigs = [];
     
     /// <summary>
     /// SpecificationSelector is responsible for loading file configurations from a directory.
