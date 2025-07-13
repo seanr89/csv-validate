@@ -1,5 +1,7 @@
 
 
+namespace validator.Models;
+
 /// <summary>
 /// Represents the validation configuration for a single record type in a file.
 /// </summary>

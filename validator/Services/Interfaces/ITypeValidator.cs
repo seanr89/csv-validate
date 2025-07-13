@@ -1,3 +1,5 @@
+namespace validator.Services.Interfaces;
+
 public interface ITypeValidator
 {
     bool ValidateType(string value, string expectedType, string[] formats);

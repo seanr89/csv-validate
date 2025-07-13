@@ -1,31 +1,41 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿namespace validator;
+
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
-using validator;
+using validator.Models.Settings;
+using validator.Services;
+using validator.Services.Interfaces;
 
-// Build a config object, using env vars and JSON providers.
-IConfiguration config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json")
-    .AddEnvironmentVariables()
-    .Build();
-    
-var host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices(services =>
+class Program
+{
+    static void Main(string[] args)
     {
-        // Register your services here
-        services.AddSingleton<App>();
-        services.AddTransient<IHeaderValidator, HeaderValidator>();
-        services.AddTransient<ITypeValidator, TypeValidator>();
-        services.AddTransient<IValidatorService, ValidatorService>();
-        services.AddTransient<ISpecificationSelector, SpecificationSelector>();
+        // Build a config object, using env vars and JSON providers.
+        IConfiguration config = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json")
+            .AddEnvironmentVariables()
+            .Build();
 
-        // Bind the RunSettings section
-        services.Configure<RunSettings>(config.GetSection("RunSettings"));
-    })
-        .ConfigureLogging((context, logging) => {
-        logging.AddConfiguration(context.Configuration.GetSection("Logging"));
-    }).Build();
+        var host = Host.CreateDefaultBuilder(args)
+            .ConfigureServices(services =>
+            {
+                // Register your services here
+                services.AddSingleton<App>();
+                services.AddTransient<IHeaderValidator, HeaderValidator>();
+                services.AddTransient<ITypeValidator, TypeValidator>();
+                services.AddTransient<IValidatorService, ValidatorService>();
+                services.AddTransient<ISpecificationSelector, SpecificationSelector>();
 
-var app = host.Services.GetRequiredService<App>();
-app?.Run();
+                // Bind the RunSettings section
+                services.Configure<RunSettings>(config.GetSection("RunSettings"));
+            })
+                .ConfigureLogging((context, logging) => {
+                logging.AddConfiguration(context.Configuration.GetSection("Logging"));
+            }).Build();
+
+        var app = host.Services.GetRequiredService<App>();
+        app?.Run();
+    }
+}

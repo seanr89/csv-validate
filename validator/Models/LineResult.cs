@@ -1,4 +1,6 @@
 
+namespace validator.Models;
+
 public class LineResult(int lineCount, bool valid, string? message)
 {
     public int LineCount { get; } = lineCount;

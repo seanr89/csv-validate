@@ -1,4 +1,6 @@
 
+namespace validator.Models;
+
 public class RecordResult(
     int recordCount,
     string key,

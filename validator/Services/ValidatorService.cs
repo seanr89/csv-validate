@@ -1,3 +1,8 @@
+using validator.Models;
+using validator.Services.Interfaces;
+
+namespace validator.Services;
+
 public class ValidatorService : IValidatorService
 {
     private readonly ITypeValidator _typeValidator;

@@ -1,4 +1,6 @@
 
+namespace validator.Models;
+
 /// <summary>
 /// A summary model so that an export can be returned at end of run
 /// </summary>

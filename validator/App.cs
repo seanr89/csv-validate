@@ -1,4 +1,6 @@
 
+using validator.Models;
+using validator.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Spectre.Console;

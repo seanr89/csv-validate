@@ -1,4 +1,8 @@
 
+using validator.Models;
+using validator.Services.Interfaces;
+
+namespace validator.Services;
 public class HeaderValidator() : IHeaderValidator
 {
     /// <summary>
@@ -53,7 +57,7 @@ public class HeaderValidator() : IHeaderValidator
         {
             results.Add(new RecordResult(lineCount, string.Join(fileConfig.Delimiter, fields), false, $"Header is missing {expectedCount - fields.Length} column(s)"));
         }
-        else
+        else if (fields.Length > expectedCount)
         {
             results.Add(new RecordResult(lineCount, string.Join(fileConfig.Delimiter, fields), false, $"Header has {fields.Length - expectedCount} extra column(s)"));
         }

@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using Xunit;
+using validator.Services;
+using validator.Services.Interfaces;
 
 public class SpecificationSelectorTests : IDisposable
 {

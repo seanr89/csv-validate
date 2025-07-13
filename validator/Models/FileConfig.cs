@@ -1,4 +1,6 @@
 
+namespace validator.Models;
+
 /// <summary>
 /// Base configuration for all file configuration/specifications
 /// </summary>

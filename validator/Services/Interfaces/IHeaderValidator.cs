@@ -1,5 +1,9 @@
 
 
+using validator.Models;
+
+namespace validator.Services.Interfaces;
+
 public interface IHeaderValidator
 {
 

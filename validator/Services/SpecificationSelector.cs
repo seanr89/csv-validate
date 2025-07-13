@@ -1,4 +1,8 @@
+using validator.Models;
+using validator.Services.Interfaces;
 using Newtonsoft.Json;
+
+namespace validator.Services;
 
 public class SpecificationSelector : ISpecificationSelector
 {

@@ -1,4 +1,7 @@
+using validator.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+
+namespace validator.Services;
 
 // Dedicated to the type validation logic
 // This class is responsible for validating different types of data
