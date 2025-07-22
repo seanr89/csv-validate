@@ -399,7 +399,8 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-*.csv
+# *.csv
 */files/output/** */
 */files/outputs/** */
 **/coveragereport/**
+*.DS_Store
