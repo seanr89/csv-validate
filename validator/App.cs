@@ -21,7 +21,10 @@ public class App
     }
 
     /// <summary>
-    /// Entry point for application to execute jobs
+    /// Entry point for application to execute job flow
+    /// Steps:
+    /// Request and validate the file request type!
+    /// Load in all possible files by type!
     /// </summary>
     public void Run()
     {
@@ -39,7 +42,7 @@ public class App
             return;
         }
 
-        Console.WriteLine($"File config found for {fileType} with {fileConfig.ValidationConfigs.Count} line configs");
+        //Console.WriteLine($"File config found for {fileType} with {fileConfig.ValidationConfigs.Count} line configs");
 
         // go grab the files for the type
         var files = Directory.GetFiles("../files/", $"{fileType}.csv");
@@ -49,7 +52,7 @@ public class App
             return;
         }
 
-        AnsiConsole.MarkupLine($"[green]Found {files.Length} files for {fileType}[/]");
+        //AnsiConsole.MarkupLine($"[green]Found {files.Length} files for {fileType}[/]");
 
         // now we want to process each file
         foreach (var file in files)
@@ -89,12 +92,8 @@ public class App
                     return;
                 }
 
-                if (fileTypeToWrite == "json")
-                {
-                    // write to json
-                    WriteToJson(file, results);
-                    return;
-                }
+                FileWriter.WriteToJson(file, results);
+                return;
             }
 
             // Print summary of results
@@ -104,42 +103,7 @@ public class App
         _logger.LogInformation("App::Completed");
     }
 
-    /// <summary>
-    /// Save the results to a JSON file
-    /// This will create a new file in the outputs directory
-    /// and write the results to it
-    /// The file name will be the same as the input file
-    /// but with a .json extension
-    /// and the path will be ../files/outputs/
-    /// </summary>
-    /// <param name="filePath"></param>
-    /// <param name="results"></param>
-    void WriteToJson(string filePath, List<LineResult> results)
-    {
-        string outPutName = filePath.Replace(".csv", ".json").Split("/").Last();
-        string outPutPath = Path.Combine("../files/outputs/", outPutName);
-
-        // create JSON configuration for newtonsoft
-        using StringWriter sw = new StringWriter();
-        using JsonTextWriter writer = new JsonTextWriter(sw)
-        {
-            Formatting = Formatting.Indented,
-            Indentation = 4,
-            IndentChar = ' '
-        };
-        JsonSerializer serializer = new JsonSerializer();
-        serializer.Serialize(writer, results);
-        string json = sw.ToString();
-
-        // write the json to a file
-        using (StreamWriter file = File.CreateText(outPutPath))
-        {
-            file.WriteLine(json);
-            file.Flush();
-            file.Close();
-            AnsiConsole.MarkupLine($"[green]Wrote results to {outPutPath}[/]");
-        }
-    }
+    
 
     /// <summary>
     /// Create selection prompt and wait for response

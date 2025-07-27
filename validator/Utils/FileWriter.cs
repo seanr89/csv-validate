@@ -2,6 +2,8 @@ using System.Globalization;
 using CsvHelper;
 using CsvHelper.Configuration;
 using CsvHelper.TypeConversion;
+using Newtonsoft.Json;
+using validator.Models;
 
 public static class FileWriter
 {
@@ -31,11 +33,49 @@ public static class FileWriter
             WriteToFile(data, fileName);
         }
     }
+    
+    /// <summary>
+    /// Save the results to a JSON file
+    /// This will create a new file in the outputs directory
+    /// and write the results to it
+    /// The file name will be the same as the input file
+    /// but with a .json extension
+    /// and the path will be ../files/outputs/
+    /// </summary>
+    /// <param name="filePath"></param>
+    /// <param name="results"></param>
+    public static void WriteToJson(string filePath, List<LineResult> results)
+    {
+        string outPutName = filePath.Replace(".csv", ".json").Split("/").Last();
+        string outPutPath = Path.Combine("../files/outputs/", outPutName);
+
+        // create JSON configuration for newtonsoft
+        using StringWriter sw = new StringWriter();
+        using JsonTextWriter writer = new JsonTextWriter(sw)
+        {
+            Formatting = Formatting.Indented,
+            Indentation = 4,
+            IndentChar = ' '
+        };
+        JsonSerializer serializer = new JsonSerializer();
+        serializer.Serialize(writer, results);
+        string json = sw.ToString();
+
+        // write the json to a file
+        using (StreamWriter file = File.CreateText(outPutPath))
+        {
+            file.WriteLine(json);
+            file.Flush();
+            file.Close();
+            //AnsiConsole.MarkupLine($"[green]Wrote results to {outPutPath}[/]");
+        }
+    }
 
     static void WriteToFile<T>(IEnumerable<T> data, string fileName)
     {
         // Write to file
-        try{
+        try
+        {
             // Append to the file.
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -47,11 +87,11 @@ public static class FileWriter
             using (var csv = new CsvWriter(writer, config))
             {
                 var options = new TypeConverterOptions { Formats = ["dd/MM/yyyy"] };
-                csv.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);          
+                csv.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);
                 csv.WriteRecords(data);
             }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             // Log error
             Console.WriteLine($"Error writing to file: {e.Message}");

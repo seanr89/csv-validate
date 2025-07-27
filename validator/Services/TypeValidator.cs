@@ -153,6 +153,12 @@ public class TypeValidator : ITypeValidator
             return false;
         }
     }
+
+    /// <summary>
+    /// TODO: remove this item!
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public bool ValidateString(string value)
     {
         // All values are valid strings

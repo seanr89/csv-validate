@@ -1,6 +1,10 @@
 
 namespace validator.Models;
 
+/// <summary>
+/// Individual line result model - used to build up the validation result data for each line
+/// primary contructor expects a lineCount, valid flag and message
+/// </summary>
 public class LineResult(int lineCount, bool valid, string? message)
 {
     public int LineCount { get; } = lineCount;
@@ -14,7 +18,7 @@ public class LineResult(int lineCount, bool valid, string? message)
     /// <param name="recordResult"></param>
     public void AddRecordResult(RecordResult? recordResult)
     {
-        if(recordResult == null)
+        if (recordResult == null)
         {
             return;
         }
@@ -29,7 +33,7 @@ public class LineResult(int lineCount, bool valid, string? message)
     public void AddRecordResults(List<RecordResult> recordResults)
     {
         RecordResults ??= [];
-        if(recordResults.Count > 0)
+        if (recordResults.Count > 0)
             RecordResults.AddRange(recordResults);
     }
 }
