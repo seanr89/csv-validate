@@ -8,5 +8,4 @@ public interface ITypeValidator
     bool ValidateDouble(string value);
     bool ValidateDecimal(string value);
     bool ValidateInt(string value);
-    bool ValidateString(string value);
 }

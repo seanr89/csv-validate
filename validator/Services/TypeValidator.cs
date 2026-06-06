@@ -38,7 +38,7 @@ public class TypeValidator : ITypeValidator
             case "int":
                 return ValidateInt(value);
             case "string":
-                return ValidateString(value);
+                return true; // All values can be considered valid strings, so we return true without validation
             case "bool":
                 return ValidateBool(value);
             case "date":
@@ -99,6 +99,15 @@ public class TypeValidator : ITypeValidator
         return false;
     }
 
+    /// <summary>
+    /// Validates a Date value against specified formats.
+    /// This method attempts to parse the value using the provided formats.
+    /// If no formats are provided, it uses default formats like "yyyy-MM-dd", "MM/dd/yyyy", and "dd/MM/yyyy".
+    /// If the value can be parsed successfully, it returns true; otherwise, it logs a warning and returns false.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="formats"></param>
+    /// <returns></returns>
     public bool ValidateDate(string value, string[]? formats)
     {
         if (formats == null || formats.Length == 0)
@@ -117,6 +126,13 @@ public class TypeValidator : ITypeValidator
         return false;
     }
 
+    /// <summary>
+    /// Validates a double value.
+    /// This method attempts to parse the value as a double.
+    /// If the parsing is successful, it returns true; otherwise, it logs a warning and returns false.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public bool ValidateDouble(string value)
     {
         if (double.TryParse(value, out double result))
@@ -129,6 +145,14 @@ public class TypeValidator : ITypeValidator
             return false;
         }
     }
+
+    /// <summary>
+    /// Validates a decimal value.
+    /// This method attempts to parse the value as a decimal.
+    /// If the parsing is successful, it returns true; otherwise, it logs a warning and returns false.
+    /// </summary> 
+    /// <param name="value"></param>
+    /// <returns></returns>
     public bool ValidateDecimal(string value)
     {
         if (decimal.TryParse(value, out decimal result))
@@ -141,6 +165,14 @@ public class TypeValidator : ITypeValidator
             return false;
         }
     }
+    /// <summary>
+    /// Validates an integer value.
+    /// This method attempts to parse the value as an integer.
+    /// If the parsing is successful, it returns true; otherwise, it logs a warning and returns false.
+    /// The method uses the int.TryParse method to perform the validation, which is a safe way to check if the value can be converted to an integer without throwing an exception.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
     public bool ValidateInt(string value)
     {
         if (int.TryParse(value, out int result))
@@ -152,16 +184,5 @@ public class TypeValidator : ITypeValidator
             _logger.LogWarning($"Invalid int value: {value}");
             return false;
         }
-    }
-
-    /// <summary>
-    /// TODO: remove this item!
-    /// </summary>
-    /// <param name="value"></param>
-    /// <returns></returns>
-    public bool ValidateString(string value)
-    {
-        // All values are valid strings
-        return true;
     }
 }

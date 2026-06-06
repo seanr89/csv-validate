@@ -23,8 +23,9 @@ public static class FileWriter
     /// <typeparam name="T"></typeparam>
     public static void TryWriteOrAppendToFile<T>(IEnumerable<T> data, string fileName = "transactions.csv")
     {
-        CheckAndCreateDirectory();
-        if(FileExists(fileName))
+        string directoryPath = "../files/outputs/";
+        CheckAndCreateDirectory(directoryPath);
+        if(FileExists(directoryPath,fileName))
         {
             AppendToFile(data, fileName);
         }
@@ -71,7 +72,15 @@ public static class FileWriter
         }
     }
 
-    static void WriteToFile<T>(IEnumerable<T> data, string fileName)
+    /// <summary>
+    /// Write the data to a file. If the file does not exist, create it and write to it.
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="fileName"></param>
+    /// <param name="writeHeader"></param>
+    /// <param name="delimiter"></param>
+    /// <typeparam name="T"></typeparam>
+    static void WriteToFile<T>(IEnumerable<T> data, string fileName, bool writeHeader = true, string delimiter = "|")
     {
         // Write to file
         try
@@ -80,8 +89,8 @@ public static class FileWriter
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 // Don't write the header again.
-                HasHeaderRecord = true,
-                Delimiter = "|"
+                HasHeaderRecord = writeHeader,
+                Delimiter = delimiter
             };
             using (var writer = new StreamWriter($"../files/outputs/{fileName}"))
             using (var csv = new CsvWriter(writer, config))
@@ -98,15 +107,23 @@ public static class FileWriter
         }
     }
 
-    static void AppendToFile<T>(IEnumerable<T> data, string fileName)
+    /// <summary>
+    /// Append the data to a file. If the file does not exist, create it and write to it.
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="fileName"></param>
+    /// <param name="writeHeader"></param>
+    /// <param name="delimiter"></param>
+    /// <typeparam name="T"></typeparam>
+    static void AppendToFile<T>(IEnumerable<T> data, string fileName, bool writeHeader = true, string delimiter = "|")
     {
         try{
             // Configure the CSV writer
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 // Don't write the header again.
-                HasHeaderRecord = false,
-                Delimiter = "|"
+                HasHeaderRecord = writeHeader,
+                Delimiter = delimiter
             };
             // Append to file
             try
@@ -140,11 +157,12 @@ public static class FileWriter
     /// If the file does not exist, return false.
     /// This is used to determine if we need to write the header or not.
     /// </summary>
+    /// <param name="directoryPath">The path to the directory where the file is located. Default is "../files/outputs/".</param>
     /// <param name="fileName">The name of the file to check. Default is "transactions.csv".</param>
     /// <returns></returns>
-    static bool FileExists(string fileName = "transactions.csv")
+    static bool FileExists(string directoryPath, string fileName = "transactions.csv")
     {
-        if(File.Exists($"../files/outputs/{fileName}"))
+        if(File.Exists($"{directoryPath}/{fileName}"))
         {
             return true;
         }

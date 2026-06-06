@@ -65,15 +65,6 @@ namespace validator.Tests
         }
 
         [Theory]
-        [InlineData("any string", true)]
-        [InlineData("", true)]
-        public void ValidateString_AlwaysTrue(string value, bool expected)
-        {
-            var result = _validator.ValidateString(value);
-            Assert.Equal(expected, result);
-        }
-
-        [Theory]
         [InlineData("123", "int", null, true)]
         [InlineData("abc", "int", null, false)]
         [InlineData("true", "bool", null, true)]
