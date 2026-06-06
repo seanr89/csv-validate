@@ -32,7 +32,7 @@ public class HeaderValidatorTests
 
         // Assert
         Assert.NotEmpty(results);
-        Assert.Contains(results, r => r.ErrorMessage.Contains("Header is missing 1 column(s)"));
+        Assert.Contains(results, r => r.ErrorMessage != null && r.ErrorMessage.Contains("Header is missing 1 column(s)"));
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class HeaderValidatorTests
 
         // Assert
         Assert.NotEmpty(results);
-        Assert.Contains(results, r => r.ErrorMessage.Contains("Header has 1 extra column(s)"));
+        Assert.Contains(results, r => r.ErrorMessage != null && r.ErrorMessage.Contains("Header has 1 extra column(s)"));
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class HeaderValidatorTests
 
         // Assert
         Assert.NotEmpty(results);
-        Assert.Contains(results, r => r.ErrorMessage.Contains("Header field 'FullName' not found in validation config"));
+        Assert.Contains(results, r => r.ErrorMessage != null && r.ErrorMessage.Contains("Header field 'FullName' not found in validation config"));
     }
 
     [Fact]
@@ -114,6 +114,6 @@ public class HeaderValidatorTests
 
         // Assert
         Assert.NotEmpty(results);
-        Assert.Contains(results, r => r.ErrorMessage.Contains("Header is missing 2 column(s)"));
+        Assert.Contains(results, r => r.ErrorMessage != null && r.ErrorMessage.Contains("Header is missing 2 column(s)"));
     }
 }
