@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>csv-validate Backlog</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --surface: #ffffff; --border: #e2e2dc; --text: #1f2328; --muted: #656d76;
+    --accent: #2457c5; --code-bg: #efefea;
+    --bug: #b42318; --bug-bg: #fdecea;
+    --debt: #8a5a00; --debt-bg: #fdf3dc;
+    --feature: #0b6b3a; --feature-bg: #e1f4ea;
+    --high: #b42318; --med: #8a5a00; --low: #656d76;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161a; --surface: #1c1f24; --border: #2f343b; --text: #e6e8eb; --muted: #9aa3ad;
+      --accent: #7aa2f7; --code-bg: #262a31;
+      --bug: #ff8b80; --bug-bg: #3a1a17;
+      --debt: #f0c36a; --debt-bg: #38290d;
+      --feature: #6fd49b; --feature-bg: #12301f;
+      --high: #ff8b80; --med: #f0c36a; --low: #9aa3ad;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a; --surface: #1c1f24; --border: #2f343b; --text: #e6e8eb; --muted: #9aa3ad;
+    --accent: #7aa2f7; --code-bg: #262a31;
+    --bug: #ff8b80; --bug-bg: #3a1a17;
+    --debt: #f0c36a; --debt-bg: #38290d;
+    --feature: #6fd49b; --feature-bg: #12301f;
+    --high: #ff8b80; --med: #f0c36a; --low: #9aa3ad;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: 26px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font: 0.88em ui-monospace, Menlo, Consolas, monospace; }
+
+  .progress { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+  .progress-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; }
+  .bar { height: 8px; background: var(--code-bg); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+  .bar > span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+  .stats { display: flex; gap: 14px; flex-wrap: wrap; color: var(--muted); font-size: 13px; margin-top: 8px; }
+
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 24px; }
+  .toolbar input[type=search] {
+    flex: 1 1 200px; min-width: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text); font: inherit;
+  }
+  button, select {
+    padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+    color: var(--text); font: inherit; font-size: 14px; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  section { margin-bottom: 32px; }
+  section h2 { display: flex; align-items: center; gap: 10px; font-size: 18px; margin: 0 0 4px; }
+  section h2 .count { font-size: 13px; font-weight: 500; color: var(--muted); }
+  section > p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+
+  .item { display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .item.done { opacity: .6; }
+  .item.done .title { text-decoration: line-through; }
+  .item input[type=checkbox] { width: 18px; height: 18px; margin-top: 3px; flex: none; accent-color: var(--accent); cursor: pointer; }
+  .body { min-width: 0; flex: 1; }
+  .title { font-weight: 600; cursor: pointer; }
+  .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; font-size: 12px; }
+  .chip { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+  .chip.high { color: var(--high); border-color: var(--high); }
+  .chip.med { color: var(--med); border-color: var(--med); }
+  .chip.low { color: var(--low); }
+  .detail { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+  .where { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+  .empty { color: var(--muted); font-style: italic; padding: 8px 2px; }
+
+  .tag-bug { color: var(--bug); } .tag-debt { color: var(--debt); } .tag-feature { color: var(--feature); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot-bug { background: var(--bug); } .dot-debt { background: var(--debt); } .dot-feature { background: var(--feature); }
+</style>
+</head>
+<body>
+<main>
+  <h1>csv-validate backlog</h1>
+  <p class="sub">Potential bugs, tech debt and features found by reading the code. Ticks are saved in this browser only; the list itself lives in this file.</p>
+
+  <div class="progress" aria-live="polite">
+    <div class="progress-row"><strong id="pct">0% done</strong><span id="count">0 of 0 items</span></div>
+    <div class="bar"><span id="fill"></span></div>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="Search title, detail or file" aria-label="Search items">
+    <select id="pri" aria-label="Filter by priority">
+      <option value="">All priorities</option>
+      <option value="high">High</option>
+      <option value="med">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <button id="hide" aria-pressed="false">Hide completed</button>
+    <button id="copy">Copy open items</button>
+    <button id="reset">Reset ticks</button>
+    <button id="theme">Theme</button>
+  </div>
+
+  <div id="root"></div>
+</main>
+
+<script>
+// cat: bug | debt | feature   pri: high | med | low
+// Edit this array to add or change items. Keep ids unique and stable so saved ticks still match.
+const ITEMS = [
+  // ---------------- Bugs ----------------
+  { id: "bug-has-expected-inverted", cat: "bug", pri: "high",
+    title: "allowedValues check is skipped when hasExpected is true",
+    detail: "The condition is `HasExpected != true && AllowedValues != null && !Contains(...)`, so a column that sets `hasExpected: true` (CardType in Transaction_Spec.json) is never checked against its allowed values, while one without it (ReversalIndicator) is. The flag reads as the opposite of what it does. Decide what hasExpected means, or drop it and check whenever allowedValues is present.",
+    where: "Services/ValidatorService.cs, Specifications/Transaction_Spec.json" },
+  { id: "bug-visa-typo", cat: "bug", pri: "med",
+    title: "Transaction spec allows \"Vasa\" instead of \"Visa\"",
+    detail: "Hidden today because of the hasExpected bug. Once the allowed-values check is fixed, real Visa rows will be rejected.",
+    where: "Specifications/Transaction_Spec.json" },
+  { id: "bug-line-valid-flag", cat: "bug", pri: "high",
+    title: "Lines with a valid empty nullable field are reported as invalid",
+    detail: "`LineResult.Valid` is only set to true when `RecordResults` is empty, but a nullable empty field adds a passing `RecordResult`. Such a line stays `Valid = false` and `App` counts it in the \"has N errors\" total. Failing lines also keep an empty `Message`.",
+    where: "Services/ValidatorService.cs (ProcessLine), App.cs" },
+  { id: "bug-short-rows", cat: "bug", pri: "high",
+    title: "Data rows with too few columns pass validation",
+    detail: "`ProcessLine` loops over the fields it finds, so a row missing trailing columns is never flagged (only the header gets a missing/extra column check). Extra columns do fail, but with the vague \"Field index N not found\" and the rest of the line is not checked.",
+    where: "Services/ValidatorService.cs (ProcessLine)" },
+  { id: "bug-blank-lines", cat: "bug", pri: "med",
+    title: "Blank or trailing empty lines are reported as errors",
+    detail: "`\"\".Split(delimiter)` returns one empty field, so the `fields.Length <= 0` guard can never fire. An empty last line fails the non-nullable check on column 0. Skip or report blank lines explicitly.",
+    where: "Services/ValidatorService.cs (ProcessLine)" },
+  { id: "bug-culture", cat: "bug", pri: "med",
+    title: "Number and date parsing depends on the machine's culture",
+    detail: "`int/double/decimal.TryParse` and `DateTime.TryParseExact` are called without a culture, so `1,5` or `65.25` can pass or fail depending on the OS locale. Use `CultureInfo.InvariantCulture` (or a spec-level locale).",
+    where: "Services/TypeValidator.cs" },
+  { id: "bug-date-type-route", cat: "bug", pri: "low",
+    title: "\"date\" type is validated by ValidateDateTime; ValidateDate is dead code",
+    detail: "Both `date` and `datetime` call `ValidateDateTime`. With no `formats` in the spec, a `date` column gets the datetime defaults (with `HH:mm:ss`) rather than the date defaults.",
+    where: "Services/TypeValidator.cs (ValidateType)" },
+  { id: "bug-csv-append-header", cat: "bug", pri: "high",
+    title: "Appending to an existing results CSV writes the header again",
+    detail: "`AppendToFile` sets `HasHeaderRecord = writeHeader` and `writeHeader` defaults to true, despite the comment saying not to. Every second run adds a header row mid-file. Pass `false` when appending.",
+    where: "Utils/FileWriter.cs (AppendToFile)" },
+  { id: "bug-json-no-dir", cat: "bug", pri: "med",
+    title: "Writing JSON results crashes if ../files/outputs does not exist",
+    detail: "Only `TryWriteOrAppendToFile` creates the directory. `WriteToJson` goes straight to `File.CreateText`, and it builds the file name by splitting on \"/\", which breaks on Windows paths.",
+    where: "Utils/FileWriter.cs (WriteToJson)" },
+  { id: "bug-early-return", cat: "bug", pri: "med",
+    title: "Writing results ends the run early and skips the summary",
+    detail: "After a write, `App.Run` returns from inside the file loop, so later files are skipped and neither the summary nor the \"Completed\" log line runs. The summary only prints when the user declines to write. `Summary` is also never filled in, so it always prints zeros and \"N/A\".",
+    where: "App.cs" },
+  { id: "bug-header-dropped-csv", cat: "bug", pri: "low",
+    title: "Header errors are dropped from CSV output but kept in JSON",
+    detail: "The CSV branch calls `results.RemoveAt(0)` when `HeaderLine` is true, discarding any header failures, while the JSON branch writes the header entry. It also mutates the list the rest of the method uses.",
+    where: "App.cs" },
+  { id: "bug-bad-spec-crash", cat: "bug", pri: "med",
+    title: "A malformed spec file crashes startup; a missing \"type\" throws a NullReferenceException",
+    detail: "`LoadFileConfig` has no try/catch around deserialization, and `ValidateType` calls `expectedType.ToLower()` on a possibly null type. Validate specs when loading and report which file and field is wrong.",
+    where: "Services/SpecificationSelector.cs, Services/TypeValidator.cs" },
+  { id: "bug-account-spec-empty", cat: "bug", pri: "low",
+    title: "Account_Spec.json has no column definitions",
+    detail: "Choosing \"account\" always ends with \"No validation configs found\". Either fill it in or hide types with empty specs from the menu.",
+    where: "Specifications/Account_Spec.json" },
+  { id: "bug-readme-run", cat: "bug", pri: "med",
+    title: "README run command does not work from the repo root",
+    detail: "`dotnet run --project validator/validator.csproj` leaves the working directory at the repo root, so `Specifications` and `../files/` are not found. Specs are not copied to the output folder either. Fix the paths (see tech debt) or update the README.",
+    where: "README.md, validator.csproj" },
+  { id: "bug-field-trim", cat: "bug", pri: "low",
+    title: "Trimming is inconsistent across checks",
+    detail: "Allowed values compare `field.Trim()`, but length and type checks use the raw field, so `\" Y\"` passes the allowed-values check and may fail others (or the reverse).",
+    where: "Services/ValidatorService.cs" },
+  { id: "bug-makefile-no-restore", cat: "bug", pri: "low",
+    title: "`make run-tests` fails on a fresh clone",
+    detail: "The target uses `--no-restore`, so it only works after a build or restore has already run.",
+    where: "makefile" },
+
+  // ---------------- Tech debt ----------------
+  { id: "debt-path-resolution", cat: "debt", pri: "high",
+    title: "Resolve spec and file paths from config, not the working directory",
+    detail: "`\"Specifications\"`, `\"../files/\"` and `\"../files/outputs/\"` are hard-coded and relative to the current directory. Copy specs to the output folder, resolve against `AppContext.BaseDirectory`, and use the unused `RunSettings` (InboxPrefix/OutboxPrefix) for input and output locations.",
+    where: "App.cs, Services/SpecificationSelector.cs, Utils/FileWriter.cs, Models/Settings/RunSettings.cs" },
+  { id: "debt-validator-service-split", cat: "debt", pri: "high",
+    title: "Break up ValidatorService.ProcessLine",
+    detail: "One method handles splitting, null checks, length, allowed values and type, and the source calls itself \"very messy\". Turn each rule into a small checker (a list of rules per column) so new rules don't mean editing a loop.",
+    where: "Services/ValidatorService.cs" },
+  { id: "debt-validation-config-dupes", cat: "debt", pri: "med",
+    title: "ValidationConfig exposes every field twice",
+    detail: "The positional record parameters (`type`, `minLength`...) generate lower-case properties next to the explicit PascalCase ones. The service mixes both (`.minLength` and `.IsNullable`). Use one set and a `required init` model.",
+    where: "Models/ValidationConfig.cs, Services/ValidatorService.cs" },
+  { id: "debt-console-vs-logger", cat: "debt", pri: "med",
+    title: "Replace Console.WriteLine in services and utils with ILogger or Spectre output",
+    detail: "Services print directly, which is noisy (file paths, config loading) and impossible to silence or assert in tests. Use structured logging (`_logger.LogWarning(\"... {Value}\", value)`) instead of interpolated strings.",
+    where: "Services/*, Utils/FileWriter.cs, Services/TypeValidator.cs" },
+  { id: "debt-filewriter-static", cat: "debt", pri: "med",
+    title: "Turn FileWriter into an injectable service",
+    detail: "It is a static class in the global namespace with duplicated write/append code, nested try/catch that swallows errors, and a hard-coded `dd/MM/yyyy` date format and `|` delimiter. Put it behind an interface so it can be tested and its failures can reach the caller.",
+    where: "Utils/FileWriter.cs" },
+  { id: "debt-csv-parsing", cat: "debt", pri: "med",
+    title: "Parse input with CsvHelper instead of string.Split",
+    detail: "CsvHelper is referenced but only used for writing. `Split` breaks on quoted fields containing the delimiter, and `File.ReadAllLines` loads the whole file into memory.",
+    where: "Services/ValidatorService.cs, validator.csproj" },
+  { id: "debt-unused-code", cat: "debt", pri: "low",
+    title: "Remove or use dead code and unused config",
+    detail: "`FileConfig.HasFooter` (always false), `appsettings.json` `dateformats`, `ProcessFieldByType`'s unused `fieldIndex`, the pointless tuple from `TryProcessHeader`, duplicated XML doc blocks, unused `result` variables in `TypeValidator`, and `JsonHelperNewtonsoft` (only referenced by tests while `SpecificationSelector` does its own unsafe read).",
+    where: "Models/FileConfig.cs, appsettings.json, Services/ValidatorService.cs, Utils/JsonHelperNewtonsoft.cs" },
+  { id: "debt-menu-hardcoded", cat: "debt", pri: "med",
+    title: "Build the file-type menu from the loaded specs",
+    detail: "The choices `transactions/account/customer/card` are hard-coded in `App.Run`, so a new spec file does nothing until the code changes. Expose the loaded file types from `ISpecificationSelector`.",
+    where: "App.cs, Services/SpecificationSelector.cs" },
+  { id: "debt-typevalidator-dupes", cat: "debt", pri: "low",
+    title: "Collapse the repeated Validate* methods in TypeValidator",
+    detail: "Date and DateTime are near copies, and int/double/decimal/bool repeat the same parse-and-log shape. A table of type name to parser would shrink it and make adding types easy.",
+    where: "Services/TypeValidator.cs" },
+  { id: "debt-header-position", cat: "debt", pri: "med",
+    title: "Header check ignores column position",
+    detail: "`HeaderValidator` only checks that each header name exists in the spec, not that it sits at the spec's `index` (there is a TODO in the service). Reordered columns pass the header check and then fail every data row.",
+    where: "Services/HeaderValidator.cs, Services/ValidatorService.cs" },
+  { id: "debt-error-messages", cat: "debt", pri: "med",
+    title: "Make error messages say which rule failed",
+    detail: "Every failure returns the column's single static `errorMessage`, so a length failure, an allowed-values failure and a type failure look the same. Include column name, value, and rule (still tracked in TODO.md).",
+    where: "Services/ValidatorService.cs, Models/RecordResult.cs" },
+  { id: "debt-test-gaps", cat: "debt", pri: "high",
+    title: "Add tests for ValidatorService, FileWriter and App flow",
+    detail: "There are tests for the type, header, selector and utils, but none for the core line processing or the writers. Most of the bugs above would have been caught by a handful of tests plus an end-to-end test against `files/transactions.csv`.",
+    where: "validator.Tests/" },
+  { id: "debt-two-solutions", cat: "debt", pri: "low",
+    title: "Two solution files and stale docs",
+    detail: "`csv-validate.sln` and `validator/validator.sln` both exist, and CI restores only `validator.csproj`. `TODO.md` is auto-generated and partly out of date. Pick one solution and fold this list into it.",
+    where: "csv-validate.sln, validator/validator.sln, TODO.md, .github/workflows/build.yml" },
+  { id: "debt-ci", cat: "debt", pri: "low",
+    title: "CI: add coverage, formatting and an app smoke test",
+    detail: "The workflow builds and runs tests only. Add `dotnet format --verify-no-changes`, coverage upload, and a run of the validator against `files/transactions.csv`. `scripts/test-and-report.sh` also needs `reportgenerator` and a particular working directory.",
+    where: ".github/workflows/build.yml, scripts/" },
+  { id: "debt-program-config", cat: "debt", pri: "low",
+    title: "Use the host's configuration instead of building a second one",
+    detail: "`Program.cs` builds a separate `ConfigurationBuilder` for `RunSettings` while `Host.CreateDefaultBuilder` already loads `appsettings.json` and environment variables.",
+    where: "Program.cs" },
+
+  // ---------------- Features ----------------
+  { id: "feat-cli-args", cat: "feature", pri: "high",
+    title: "Non-interactive CLI: file type, input path, output format as arguments",
+    detail: "The Spectre prompts block automation. Accept `--type`, `--file`, `--output json|csv|none` and fall back to prompts only when they are missing. Return a non-zero exit code when any line is invalid so CI can gate on it.",
+    where: "App.cs, Program.cs" },
+  { id: "feat-summary", cat: "feature", pri: "high",
+    title: "Real run summary (totals, valid/invalid counts, per-rule failures)",
+    detail: "Populate `Summary` and print it for every run, with counts by failing column and rule. Also in TODO.md.",
+    where: "Models/Summary.cs, App.cs" },
+  { id: "feat-input-dir", cat: "feature", pri: "med",
+    title: "Validate a directory or glob of files",
+    detail: "Today the app looks for exactly `../files/{type}.csv`. Accept a folder or pattern and handle multiple files per type, using the inbox/outbox settings that already exist.",
+    where: "App.cs, Models/Settings/RunSettings.cs" },
+  { id: "feat-more-rules", cat: "feature", pri: "high",
+    title: "More validation rules in the spec: regex, numeric min/max, date ranges",
+    detail: "Add `pattern`, `min`/`max` for numbers and dates, and built-in types like `guid`, `email` and `currency`. Also in TODO.md (custom field rules).",
+    where: "Models/ValidationConfig.cs, Services/TypeValidator.cs" },
+  { id: "feat-cross-field", cat: "feature", pri: "med",
+    title: "Cross-field and file-level rules",
+    detail: "Examples: unique TransactionId, reversal rows needing a matching original, end date after start date, footer or row-count checks (`HasFooter` is already stubbed).",
+    where: "Models/FileConfig.cs" },
+  { id: "feat-spec-validation", cat: "feature", pri: "med",
+    title: "Validate specs on load and publish a JSON Schema for them",
+    detail: "Check for duplicate or missing indexes, unknown types, `minLength > maxLength` and bad date formats at startup, with clear messages. A JSON Schema gives editors completion when writing specs.",
+    where: "Services/SpecificationSelector.cs" },
+  { id: "feat-header-mapping", cat: "feature", pri: "med",
+    title: "Support files with a different column order via header mapping",
+    detail: "Match columns to the spec by header name instead of position when the file has a header. Also in TODO.md.",
+    where: "Services/HeaderValidator.cs, Services/ValidatorService.cs" },
+  { id: "feat-async-stream", cat: "feature", pri: "med",
+    title: "Stream and process large files asynchronously",
+    detail: "Read line by line (or via CsvHelper) with `async`, report progress, and stop early after N errors. Also in TODO.md.",
+    where: "Services/ValidatorService.cs" },
+  { id: "feat-report-formats", cat: "feature", pri: "med",
+    title: "More report formats and a failures-only export",
+    detail: "Add an HTML or Markdown report, a plain-text format for terminals, and an option to write only the failing rows with their original line.",
+    where: "Utils/FileWriter.cs" },
+  { id: "feat-defaults-config", cat: "feature", pri: "low",
+    title: "Configurable default date formats, locale and encoding",
+    detail: "Read defaults from `appsettings.json` (the unused `dateformats` key is already there), allow a per-spec locale, and handle BOMs and non-UTF-8 files.",
+    where: "appsettings.json, Services/TypeValidator.cs" },
+  { id: "feat-logging", cat: "feature", pri: "low",
+    title: "Log to a file with a configurable level and a quiet/verbose flag",
+    detail: "Also in TODO.md. Pairs well with replacing `Console.WriteLine` calls.",
+    where: "Program.cs, appsettings.json" },
+  { id: "feat-package", cat: "feature", pri: "low",
+    title: "Package as a dotnet tool or Docker image",
+    detail: "Lets other repos validate their exports in CI without cloning this one. Needs the path-resolution work first.",
+    where: "validator.csproj" },
+  { id: "feat-spec-generate", cat: "feature", pri: "low",
+    title: "Generate a starter spec from a sample CSV",
+    detail: "Infer column names, types and max lengths from a sample file to cut the cost of writing specs like the empty Account one.",
+    where: "new command" }
+];
+
+const CATS = {
+  bug:     { label: "Potential bugs", blurb: "Behaviour that looks wrong from reading the code. Worth confirming with a failing test first." },
+  debt:    { label: "Tech debt",      blurb: "Structure and hygiene issues that make the code harder to change safely." },
+  feature: { label: "New features",   blurb: "Ideas that extend what the validator can do." }
+};
+const PRI_LABEL = { high: "High", med: "Medium", low: "Low" };
+const KEY = "csv-validate-backlog-v1";
+
+let done = {};
+try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
+
+const $ = id => document.getElementById(id);
+const state = { q: "", pri: "", hide: false };
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+// text with `code` spans, built with DOM nodes so nothing is parsed as HTML
+function richText(parent, text) {
+  text.split("`").forEach((part, i) => parent.appendChild(i % 2 ? el("code", null, part) : document.createTextNode(part)));
+}
+
+function matches(it) {
+  if (state.pri && it.pri !== state.pri) return false;
+  if (state.hide && done[it.id]) return false;
+  if (state.q) {
+    const hay = (it.title + " " + it.detail + " " + it.where).toLowerCase();
+    if (!hay.includes(state.q)) return false;
+  }
+  return true;
+}
+
+function render() {
+  const root = $("root");
+  root.textContent = "";
+  Object.keys(CATS).forEach(cat => {
+    const all = ITEMS.filter(i => i.cat === cat);
+    const shown = all.filter(matches);
+    const sec = el("section");
+    const h = el("h2");
+    h.appendChild(el("span", "dot dot-" + cat));
+    h.appendChild(el("span", "tag-" + cat, CATS[cat].label));
+    h.appendChild(el("span", "count", all.filter(i => done[i.id]).length + "/" + all.length + " done"));
+    sec.appendChild(h);
+    sec.appendChild(el("p", null, CATS[cat].blurb));
+    if (!shown.length) sec.appendChild(el("div", "empty", "Nothing matches the current filters."));
+    shown.forEach(it => sec.appendChild(card(it)));
+    root.appendChild(sec);
+  });
+  progress();
+}
+
+function card(it) {
+  const row = el("div", "item" + (done[it.id] ? " done" : ""));
+  const cb = el("input");
+  cb.type = "checkbox";
+  cb.id = it.id;
+  cb.checked = !!done[it.id];
+  cb.addEventListener("change", () => {
+    if (cb.checked) done[it.id] = true; else delete done[it.id];
+    save();
+    render();
+  });
+  const body = el("div", "body");
+  const title = el("label", "title", it.title);
+  title.htmlFor = it.id;
+  body.appendChild(title);
+  const detail = el("p", "detail");
+  richText(detail, it.detail);
+  body.appendChild(detail);
+  const meta = el("div", "meta");
+  meta.appendChild(el("span", "chip " + it.pri, PRI_LABEL[it.pri] + " priority"));
+  body.appendChild(meta);
+  if (it.where) body.appendChild(el("p", "where", "Where: " + it.where));
+  row.append(cb, body);
+  return row;
+}
+
+function progress() {
+  const total = ITEMS.length;
+  const n = ITEMS.filter(i => done[i.id]).length;
+  const pct = total ? Math.round((n / total) * 100) : 0;
+  $("pct").textContent = pct + "% done";
+  $("count").textContent = n + " of " + total + " items";
+  $("fill").style.width = pct + "%";
+  const open = c => ITEMS.filter(i => i.cat === c && !done[i.id]).length;
+  const openHigh = ITEMS.filter(i => i.pri === "high" && !done[i.id]).length;
+  $("stats").textContent = "Open: " + open("bug") + " bugs, " + open("debt") + " tech debt, " + open("feature") + " features. " + openHigh + " high priority open.";
+}
+
+$("q").addEventListener("input", e => { state.q = e.target.value.trim().toLowerCase(); render(); });
+$("pri").addEventListener("change", e => { state.pri = e.target.value; render(); });
+$("hide").addEventListener("click", e => {
+  state.hide = !state.hide;
+  e.currentTarget.setAttribute("aria-pressed", String(state.hide));
+  render();
+});
+$("reset").addEventListener("click", () => {
+  if (Object.keys(done).length && !confirm("Clear all ticks?")) return;
+  done = {}; save(); render();
+});
+$("copy").addEventListener("click", async e => {
+  const lines = [];
+  Object.keys(CATS).forEach(cat => {
+    const open = ITEMS.filter(i => i.cat === cat && !done[i.id]);
+    if (!open.length) return;
+    lines.push("## " + CATS[cat].label);
+    open.forEach(i => lines.push("- [ ] (" + PRI_LABEL[i.pri] + ") " + i.title));
+    lines.push("");
+  });
+  const btn = e.currentTarget;
+  try { await navigator.clipboard.writeText(lines.join("\n")); btn.textContent = "Copied"; }
+  catch (err) { btn.textContent = "Copy failed"; }
+  setTimeout(() => { btn.textContent = "Copy open items"; }, 1500);
+});
+$("theme").addEventListener("click", () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme === "dark" ||
+    (!root.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+  root.dataset.theme = dark ? "light" : "dark";
+});
+
+render();
+</script>
+</body>
+</html>
