@@ -31,7 +31,7 @@ public class HeaderValidator() : IHeaderValidator
             if (validatorByName == null)
             {
                 // If the field is not found in the validation configs, add an error result
-                results.Add(new RecordResult(lineCount, field, false, $"Header field '{field}' not found in validation config"));
+                results.Add(new RecordResult(lineCount, fieldIndex, field, field, false, $"Header field '{field}' not found in validation config (at index {fieldIndex})"));
                 continue;
             }
         }

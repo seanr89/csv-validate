@@ -19,7 +19,7 @@ Auto-generated Task and TODO list of records scanned via github process
 - [x] `ValidatorService` header validation does not check for missing/extra columns
 - [x] `TypeValidator.ValidateType` returns `true` for unknown types (should be `false` or configurable)
 - [x] `TypeValidator.ValidateDateTime` and `ValidateDate` log misleading error messages when all formats fail
-- [ ] Error messages in validation results are not always descriptive (e.g., missing field index or value)
+- [x] Error messages in validation results are not always descriptive (e.g., missing field index or value)
 - [x] `ProcessFieldByType` in `ValidatorService` does not handle null/empty fields consistently
 
 ---

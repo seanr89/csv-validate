@@ -121,31 +121,33 @@ public class ValidatorService : IValidatorService
             // Now lets to null check?
             if (string.IsNullOrEmpty(field) && !activeValidationConfig.IsNullable)
             {
-                result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
+                result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, false,
+                    FormatErrorMessage(fieldIndex, activeValidationConfig.Name, field, "Field is required and cannot be empty", activeValidationConfig.ErrorMessage)));
                 continue;
             }
 
             // check for null with allowance and skip if needed
             if (string.IsNullOrEmpty(field) && activeValidationConfig.IsNullable)
             {
-                result.AddRecordResult(new RecordResult(lineCount, field, true, string.Empty));
+                result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, true, string.Empty));
                 continue;
             }
 
-            bool flowControl = ProcessMinandMaxLengths(lineCount, result, field, activeValidationConfig);
+            bool flowControl = ProcessMinandMaxLengths(lineCount, result, field, activeValidationConfig, fieldIndex);
             if (!flowControl)
             {
                 continue;
             }
 
-            // This is very messy and should be moved to a dedicated function
             // expected values checks - if expected values are set
             // we need to check if the field is in the expected values
-            if ((activeValidationConfig.HasExpected != true) &&
-                activeValidationConfig.AllowedValues != null
-                    && !activeValidationConfig.AllowedValues.Contains(field.Trim()))
+            if (activeValidationConfig.HasExpected != true &&
+                activeValidationConfig.AllowedValues != null &&
+                activeValidationConfig.AllowedValues.Count > 0 &&
+                !activeValidationConfig.AllowedValues.Contains(field.Trim()))
             {
-                result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
+                result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, false,
+                    FormatErrorMessage(fieldIndex, activeValidationConfig.Name, field, $"Value '{field}' is not in allowed values: [{string.Join(", ", activeValidationConfig.AllowedValues)}]", activeValidationConfig.ErrorMessage)));
                 continue;
             }
 
@@ -164,24 +166,40 @@ public class ValidatorService : IValidatorService
     }
 
     /// <summary>
+    /// Helper to format descriptive validation error messages including field index, name, and value.
+    /// </summary>
+    private static string FormatErrorMessage(int fieldIndex, string fieldName, string value, string specificDetail, string? configuredMessage)
+    {
+        var prefix = $"Field '{fieldName}' at index {fieldIndex}";
+        if (!string.IsNullOrWhiteSpace(configuredMessage))
+        {
+            return $"{prefix}: {specificDetail}. {configuredMessage}";
+        }
+        return $"{prefix}: {specificDetail}.";
+    }
+
+    /// <summary>
     /// 
     /// </summary>
     /// <param name="lineCount"></param>
     /// <param name="result"></param>
     /// <param name="field"></param>
     /// <param name="activeValidationConfig"></param>
+    /// <param name="fieldIndex"></param>
     /// <returns></returns>
-    private static bool ProcessMinandMaxLengths(int lineCount, LineResult result, string field, ValidationConfig activeValidationConfig)
+    private static bool ProcessMinandMaxLengths(int lineCount, LineResult result, string field, ValidationConfig activeValidationConfig, int fieldIndex)
     {
         // minlength and max length checks
         if (activeValidationConfig.minLength != null && field.Length < activeValidationConfig.minLength)
         {
-            result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
+            result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, false,
+                FormatErrorMessage(fieldIndex, activeValidationConfig.Name, field, $"Value '{field}' length ({field.Length}) is less than minimum length ({activeValidationConfig.minLength})", activeValidationConfig.ErrorMessage)));
             return false;
         }
         if (activeValidationConfig.maxLength != null && field.Length > activeValidationConfig.maxLength)
         {
-            result.AddRecordResult(new RecordResult(lineCount, field, false, activeValidationConfig.ErrorMessage));
+            result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, false,
+                FormatErrorMessage(fieldIndex, activeValidationConfig.Name, field, $"Value '{field}' length ({field.Length}) exceeds maximum length ({activeValidationConfig.maxLength})", activeValidationConfig.ErrorMessage)));
             return false;
         }
 
@@ -196,7 +214,7 @@ public class ValidatorService : IValidatorService
     /// <param name="lineCount">current line location!</param>
     /// <param name="field">field param to be parsed and validated</param>
     /// <param name="validationConfig">the configuration file to be used to search</param>
-    /// <param name="fieldIndex">unsure</param>
+    /// <param name="fieldIndex">field index</param>
     /// <returns>nullable record result</returns>
     RecordResult? ProcessFieldByType(int lineCount, string field, ValidationConfig validationConfig, int fieldIndex)
     {
@@ -206,16 +224,19 @@ public class ValidatorService : IValidatorService
             if (validationConfig.IsNullable)
             {
                 // Valid: nullable and empty
-                return new RecordResult(lineCount, field, true, string.Empty);
+                return new RecordResult(lineCount, fieldIndex, validationConfig.Name, field, true, string.Empty);
             }
             // Invalid: not nullable and empty
-            return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
+            return new RecordResult(lineCount, fieldIndex, validationConfig.Name, field, false,
+                FormatErrorMessage(fieldIndex, validationConfig.Name, field, "Field is required and cannot be empty", validationConfig.ErrorMessage));
         }
 
         bool typeResult = _typeValidator.ValidateType(field, validationConfig.type, validationConfig.Formats);
         if (!typeResult)
         {
-            return new RecordResult(lineCount, field, false, validationConfig.ErrorMessage);
+            var detail = $"Value '{field}' is not a valid {validationConfig.type}";
+            return new RecordResult(lineCount, fieldIndex, validationConfig.Name, field, false,
+                FormatErrorMessage(fieldIndex, validationConfig.Name, field, detail, validationConfig.ErrorMessage));
         }
         return null;
     }
