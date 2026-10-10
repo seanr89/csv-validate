@@ -39,7 +39,7 @@ The app is a single console process that validates delimited files against JSON 
 4. `ValidatorService.ProcessFileWithConfig` produces a `List<LineResult>`, each holding `RecordResult`s for the failing fields.
 5. The user is optionally prompted to write results with `FileWriter` as CSV (`../files/outputs/{type}_results.csv`, append if it exists) or JSON (`../files/outputs/{input}.json`).
 
-**Specifications (`validator/Specifications/*.json`)**: one file per type, deserialized with Newtonsoft into `FileConfig` (`fileType`, `delimiter`, `headerLine`, `validationConfigs`). Each `ValidationConfig` describes one column by `index`, with `type`, `isNullable`, `minLength`/`maxLength`, `allowedValues`/`hasExpected`, `formats` (for dates), and an `errorMessage` shown on failure. Adding a new file type means adding a JSON spec and a matching menu entry in `App.Run`, which is hard-coded.
+**Specifications (`validator/Specifications/*.json`)**: one file per type, deserialized with Newtonsoft into `FileConfig` (`fileType`, `delimiter`, `headerLine`, `validationConfigs`). Each `ValidationConfig` describes one column by `index`, with `type`, `isNullable`, `minLength`/`maxLength`, `allowedValues`, `formats` (for dates), and an `errorMessage` shown on failure. Adding a new file type means adding a JSON spec and a matching menu entry in `App.Run`, which is hard-coded.
 
 **Per-line validation (`Services/ValidatorService.cs`)**: a line is split by the spec delimiter, and each field is checked in this order: null/empty (respecting `isNullable`), min/max length, allowed-values list, then type via `ITypeValidator`. A field index with no config yields a line-level error. When `headerLine` is true, line 1 goes through `HeaderValidator` and is skipped as data.
 

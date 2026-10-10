@@ -29,7 +29,7 @@ public class ValidatorServiceTests
             File.WriteAllLines(tempFile, [""]); // line 1 empty data row
             var config = new FileConfig("test", ",", false,
             [
-                new ValidationConfig("CustomerId", "string", 0, false, null, null, false, [], [], "Customer ID required.") { Name = "CustomerId" }
+                new ValidationConfig("CustomerId", "string", 0, false, null, null, [], [], "Customer ID required.") { Name = "CustomerId" }
             ]);
             var summary = new Summary(0, 0, 0, "N/A");
 
@@ -63,7 +63,7 @@ public class ValidatorServiceTests
             File.WriteAllLines(tempFile, ["AB"]); // length 2
             var config = new FileConfig("test", ",", false,
             [
-                new ValidationConfig("Currency", "string", 0, false, 3, 3, false, [], [], "Currency must be 3 characters.") { Name = "Currency" }
+                new ValidationConfig("Currency", "string", 0, false, 3, 3, [], [], "Currency must be 3 characters.") { Name = "Currency" }
             ]);
             var summary = new Summary(0, 0, 0, "N/A");
 
@@ -98,7 +98,7 @@ public class ValidatorServiceTests
             File.WriteAllLines(tempFile, ["UNKNOWN"]);
             var config = new FileConfig("test", ",", false,
             [
-                new ValidationConfig("Type", "string", 0, false, null, null, false, ["CREDIT", "DEBIT"], [], "Invalid type.") { Name = "Type" }
+                new ValidationConfig("Type", "string", 0, false, null, null, ["CREDIT", "DEBIT"], [], "Invalid type.") { Name = "Type" }
             ]);
             var summary = new Summary(0, 0, 0, "N/A");
 
@@ -123,6 +123,63 @@ public class ValidatorServiceTests
     }
 
     [Fact]
+    public void ProcessFileWithConfig_LineIsValid_WhenOnlyNullableFieldIsEmpty()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, ["ABC,"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Id", "string", 0, false, null, null, [], [], "Id required.") { Name = "Id" },
+                new ValidationConfig("Note", "string", 1, true, null, null, [], [], "Note optional.") { Name = "Note" }
+            ]);
+            _mockTypeValidator.Setup(v => v.ValidateType("ABC", "string", It.IsAny<string[]>())).Returns(true);
+            var summary = new Summary(0, 0, 0, "N/A");
+
+            // Act
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, summary);
+
+            // Assert
+            var lineResult = Assert.Single(results);
+            Assert.True(lineResult.Valid);
+            Assert.Equal("Line is valid", lineResult.Message);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ProcessFileWithConfig_LineIsInvalid_WhenNullableFieldEmptyButAnotherFieldFails()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, [",", "ABC,"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Id", "string", 0, false, null, null, [], [], "Id required.") { Name = "Id" },
+                new ValidationConfig("Note", "string", 1, true, null, null, [], [], "Note optional.") { Name = "Note" }
+            ]);
+            var summary = new Summary(0, 0, 0, "N/A");
+
+            // Act
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, summary);
+
+            // Assert - first line has an empty required field alongside the empty nullable one
+            Assert.False(results[0].Valid);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
     public void ProcessFileWithConfig_DescriptiveError_WhenTypeValidationFails()
     {
         // Arrange
@@ -134,7 +191,7 @@ public class ValidatorServiceTests
 
             var config = new FileConfig("test", ",", false,
             [
-                new ValidationConfig("Amount", "decimal", 0, false, null, null, false, [], [], "Amount must be a decimal.") { Name = "Amount" }
+                new ValidationConfig("Amount", "decimal", 0, false, null, null, [], [], "Amount must be a decimal.") { Name = "Amount" }
             ]);
             var summary = new Summary(0, 0, 0, "N/A");
 

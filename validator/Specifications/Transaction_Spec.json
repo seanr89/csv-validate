@@ -93,7 +93,6 @@
             "isNullable": false,
             "minLength": 1,
             "maxLength": 10,
-            "hasExpected": true,
             "allowedValues": ["Vasa", "Mastercard", "Amex", "Discover", "DinersClub", "JCB"],
             "errorMessage": "Card type must be one of the specified values: Vasa, Mastercard, Amex, Discover, DinersClub, JCB."
         }

@@ -20,9 +20,9 @@ public class HeaderValidatorTests
         // Arrange
         var fileConfig = new FileConfig("test", ",", true, new List<ValidationConfig>
         {
-            new("Id", "int", 0, false, null, null, false, [], [], "Invalid Id") { Name = "Id" },
-            new("Name", "string", 1, false, null, null, false, [], [], "Invalid Name") { Name = "Name" },
-            new("Age", "int", 2, false, null, null, false, [], [], "Invalid Age") { Name = "Age" }
+            new("Id", "int", 0, false, null, null, [], [], "Invalid Id") { Name = "Id" },
+            new("Name", "string", 1, false, null, null, [], [], "Invalid Name") { Name = "Name" },
+            new("Age", "int", 2, false, null, null, [], [], "Invalid Age") { Name = "Age" }
         });
         var line = "Id,Name";
         var headerValidator = new HeaderValidator();
@@ -41,8 +41,8 @@ public class HeaderValidatorTests
         // Arrange
         var fileConfig = new FileConfig("test", ",", true, new List<ValidationConfig>
         {
-            new("Id", "int", 0, false, null, null, false, [], [], "Invalid Id") { Name = "Id" },
-            new("Name", "string", 1, false, null, null, false, [], [], "Invalid Name") { Name = "Name" }
+            new("Id", "int", 0, false, null, null, [], [], "Invalid Id") { Name = "Id" },
+            new("Name", "string", 1, false, null, null, [], [], "Invalid Name") { Name = "Name" }
         });
         var line = "Id,Name,Age";
         var headerValidator = new HeaderValidator();
@@ -61,9 +61,9 @@ public class HeaderValidatorTests
         // Arrange
         var fileConfig = new FileConfig("test", ",", true, new List<ValidationConfig>
         {
-            new("Id", "int", 0, false, null, null, false, [], [], "Invalid Id") { Name = "Id" },
-            new("Name", "string", 1, false, null, null, false, [], [], "Invalid Name") { Name = "Name" },
-            new("Age", "int", 2, false, null, null, false, [], [], "Invalid Age") { Name = "Age" }
+            new("Id", "int", 0, false, null, null, [], [], "Invalid Id") { Name = "Id" },
+            new("Name", "string", 1, false, null, null, [], [], "Invalid Name") { Name = "Name" },
+            new("Age", "int", 2, false, null, null, [], [], "Invalid Age") { Name = "Age" }
         });
         var line = "Id,FullName,Age";
         var headerValidator = new HeaderValidator();
@@ -82,9 +82,9 @@ public class HeaderValidatorTests
         // Arrange
         var fileConfig = new FileConfig("test", ",", true, new List<ValidationConfig>
         {
-            new("Id", "int", 0, false, null, null, false, [], [], "Invalid Id") { Name = "Id" },
-            new("Name", "string", 1, false, null, null, false, [], [], "Invalid Name") { Name = "Name" },
-            new("Age", "int", 2, false, null, null, false, [], [], "Invalid Age") { Name = "Age" }
+            new("Id", "int", 0, false, null, null, [], [], "Invalid Id") { Name = "Id" },
+            new("Name", "string", 1, false, null, null, [], [], "Invalid Name") { Name = "Name" },
+            new("Age", "int", 2, false, null, null, [], [], "Invalid Age") { Name = "Age" }
         });
         var line = "Id,Name,Age";
         var headerValidator = new HeaderValidator();
@@ -102,9 +102,9 @@ public class HeaderValidatorTests
         // Arrange
         var fileConfig = new FileConfig("test", ",", true, new List<ValidationConfig>
         {
-            new("Id", "int", 0, false, null, null, false, [], [], "Invalid Id") { Name = "Id" },
-            new("Name", "string", 1, false, null, null, false, [], [], "Invalid Name") { Name = "Name" },
-            new("Age", "int", 2, false, null, null, false, [], [], "Invalid Age") { Name = "Age" }
+            new("Id", "int", 0, false, null, null, [], [], "Invalid Id") { Name = "Id" },
+            new("Name", "string", 1, false, null, null, [], [], "Invalid Name") { Name = "Name" },
+            new("Age", "int", 2, false, null, null, [], [], "Invalid Age") { Name = "Age" }
         });
         var line = "";
         var headerValidator = new HeaderValidator();

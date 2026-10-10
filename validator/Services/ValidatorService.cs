@@ -141,8 +141,7 @@ public class ValidatorService : IValidatorService
 
             // expected values checks - if expected values are set
             // we need to check if the field is in the expected values
-            if (activeValidationConfig.HasExpected != true &&
-                activeValidationConfig.AllowedValues != null &&
+            if (activeValidationConfig.AllowedValues != null &&
                 activeValidationConfig.AllowedValues.Count > 0 &&
                 !activeValidationConfig.AllowedValues.Contains(field.Trim()))
             {
@@ -155,8 +154,8 @@ public class ValidatorService : IValidatorService
             result.AddRecordResult(ProcessFieldByType(lineCount, field, activeValidationConfig, fieldIndex));
         }//End of for loop
 
-        // If we get here without any results, we are valid
-        if (result.RecordResults == null || result.RecordResults.Count == 0)
+        // The line is valid unless a field failed - passing results (e.g. empty nullable fields) don't count
+        if (result.RecordResults == null || result.RecordResults.All(r => r.Valid))
         {
             result.Valid = true;
             result.Message = "Line is valid";
