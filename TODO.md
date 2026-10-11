@@ -2,7 +2,7 @@
 Auto-generated Task and TODO list of records scanned via github process
 
 ## Features
-- [ ] Refactor `ValidatorService` to use dependency injection for validators (e.g., `ITypeValidator`)
+- [x] Refactor `ValidatorService` to use dependency injection for validators (e.g., `ITypeValidator`)
 - [ ] Add support for custom field validation rules (e.g., regex, custom delegates)
 - [ ] Support for optional/nullable fields in validation
 - [ ] Add configuration for default date/datetime formats in appsettings.json
@@ -21,6 +21,8 @@ Auto-generated Task and TODO list of records scanned via github process
 - [x] `TypeValidator.ValidateDateTime` and `ValidateDate` log misleading error messages when all formats fail
 - [x] Error messages in validation results are not always descriptive (e.g., missing field index or value)
 - [x] `ProcessFieldByType` in `ValidatorService` does not handle null/empty fields consistently
+- [x] `ValidatorService.ProcessLine` lets data rows with too few columns pass validation
+- [x] `Transaction_Spec.json` allows "Vasa" instead of "Visa" for `CardType`
 
 ---
 

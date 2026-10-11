@@ -179,6 +179,42 @@ public class ValidatorServiceTests
         }
     }
 
+    [Theory]
+    [InlineData(false)] // missing column is required
+    [InlineData(true)]  // missing column is nullable - the delimiter must still be present
+    public void ProcessFileWithConfig_LineIsInvalid_WhenRowHasTooFewColumns(bool missingColumnNullable)
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, ["ABC"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Id", "string", 0, false, null, null, [], [], "Id required.") { Name = "Id" },
+                new ValidationConfig("Note", "string", 1, missingColumnNullable, null, null, [], [], "Note error.") { Name = "Note" }
+            ]);
+            _mockTypeValidator.Setup(v => v.ValidateType("ABC", "string", It.IsAny<string[]>())).Returns(true);
+            var summary = new Summary(0, 0, 0, "N/A");
+
+            // Act
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, summary);
+
+            // Assert
+            var lineResult = Assert.Single(results);
+            Assert.False(lineResult.Valid);
+            Assert.NotNull(lineResult.RecordResults);
+            var missing = Assert.Single(lineResult.RecordResults, r => !r.Valid);
+            Assert.Equal(1, missing.FieldIndex);
+            Assert.Equal("Note", missing.FieldName);
+            Assert.Contains("missing", missing.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
     [Fact]
     public void ProcessFileWithConfig_DescriptiveError_WhenTypeValidationFails()
     {

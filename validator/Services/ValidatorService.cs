@@ -154,6 +154,16 @@ public class ValidatorService : IValidatorService
             result.AddRecordResult(ProcessFieldByType(lineCount, field, activeValidationConfig, fieldIndex));
         }//End of for loop
 
+        // A short row never reaches the loop above for the trailing columns, so flag every
+        // configured column that has no field. Missing is an error even when the column is nullable
+        // (an empty nullable field still has its delimiter).
+        foreach (var missingConfig in fileConfig.ValidationConfigs.Where(v => v.Index >= fields.Length))
+        {
+            result.AddRecordResult(new RecordResult(lineCount, missingConfig.Index, missingConfig.Name, string.Empty, false,
+                FormatErrorMessage(missingConfig.Index, missingConfig.Name, string.Empty,
+                    $"Column is missing - row has {fields.Length} column(s) but the specification expects at least {missingConfig.Index + 1}", missingConfig.ErrorMessage)));
+        }
+
         // The line is valid unless a field failed - passing results (e.g. empty nullable fields) don't count
         if (result.RecordResults == null || result.RecordResults.All(r => r.Valid))
         {
