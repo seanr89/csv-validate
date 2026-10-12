@@ -43,7 +43,7 @@ The app is a single console process that validates delimited files against JSON 
 
 **Per-line validation (`Services/ValidatorService.cs`)**: a line is split by the spec delimiter, and each field is checked in this order: null/empty (respecting `isNullable`), min/max length, allowed-values list, then type via `ITypeValidator`. A field index with no config yields a line-level error. A spec column with no field in the row (a short row) yields a failing `RecordResult` for that column, even if it is nullable. When `headerLine` is true, line 1 goes through `HeaderValidator` and is skipped as data.
 
-**Type and header checks**: `TypeValidator` handles `int`, `string` (always valid), `bool`, `date`/`datetime` (using `formats`), `double`, and `decimal`. Unknown types return `false`. `HeaderValidator` matches header names to config names case-insensitively, and column-count checks are shared in `Utils/ValidationUtils.cs`.
+**Type and header checks**: `TypeValidator` handles `int`, `string` (always valid), `bool`, `date` and `datetime` (using `formats`, falling back to date-only or date-time defaults when none are given), `double`, and `decimal`. Unknown types return `false`. `HeaderValidator` matches header names to config names case-insensitively, and column-count checks are shared in `Utils/ValidationUtils.cs`.
 
 **Results model (`Models/`)**: `LineResult` holds the line number, validity, message, and record results. `RecordResult` holds the per-field failure. `Summary` is created in `App` but is not populated, so its output shows `N/A`.
 

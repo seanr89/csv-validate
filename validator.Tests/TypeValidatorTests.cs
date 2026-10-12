@@ -47,6 +47,18 @@ namespace validator.Tests
         }
 
         [Theory]
+        [InlineData("2025-05-18", null, true)]
+        [InlineData("05/18/2025", null, true)]
+        [InlineData("2025-05-18 10:30:00", null, false)]
+        [InlineData("18/05/2025", new[] { "dd/MM/yyyy" }, true)]
+        [InlineData("2025-05-18", new[] { "dd/MM/yyyy" }, false)]
+        public void ValidateDate_Works(string value, string[]? formats, bool expected)
+        {
+            var result = _validator.ValidateDate(value, formats);
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
         [InlineData("123.45", true)]
         [InlineData("notadouble", false)]
         public void ValidateDouble_Works(string value, bool expected)
@@ -71,6 +83,9 @@ namespace validator.Tests
         [InlineData("nope", "bool", null, false)]
         [InlineData("2025-05-18", "datetime", new[] { "yyyy-MM-dd" }, true)]
         [InlineData("notadate", "datetime", new[] { "yyyy-MM-dd" }, false)]
+        [InlineData("2025-05-18", "date", null, true)]
+        [InlineData("2025-05-18 10:30:00", "date", null, false)]
+        [InlineData("notadate", "date", null, false)]
         [InlineData("123.45", "double", null, true)]
         [InlineData("notadouble", "double", null, false)]
         [InlineData("123.45", "decimal", null, true)]

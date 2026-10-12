@@ -42,7 +42,7 @@ public class TypeValidator : ITypeValidator
             case "bool":
                 return ValidateBool(value);
             case "date":
-                return ValidateDateTime(value, formats);
+                return ValidateDate(value, formats);
             case "datetime":
                 return ValidateDateTime(value, formats);
             case "double":
