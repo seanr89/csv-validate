@@ -26,10 +26,11 @@ public class ValidatorServiceTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            File.WriteAllLines(tempFile, [""]); // line 1 empty data row
+            File.WriteAllLines(tempFile, [","]); // line 1 has an empty required field
             var config = new FileConfig("test", ",", false,
             [
-                new ValidationConfig("CustomerId", "string", 0, false, null, null, [], [], "Customer ID required.") { Name = "CustomerId" }
+                new ValidationConfig("CustomerId", "string", 0, false, null, null, [], [], "Customer ID required.") { Name = "CustomerId" },
+                new ValidationConfig("Notes", "string", 1, true, null, null, [], [], null) { Name = "Notes" }
             ]);
             var summary = new Summary(0, 0, 0, "N/A");
 
@@ -40,12 +41,34 @@ public class ValidatorServiceTests
             Assert.Single(results);
             var lineResult = results[0];
             Assert.NotNull(lineResult.RecordResults);
-            var recordResult = Assert.Single(lineResult.RecordResults);
+            var recordResult = Assert.Single(lineResult.RecordResults, r => !r.Valid);
             Assert.False(recordResult.Valid);
             Assert.Equal(0, recordResult.FieldIndex);
             Assert.Equal("CustomerId", recordResult.FieldName);
             Assert.Contains("Field 'CustomerId' at index 0: Field is required and cannot be empty", recordResult.ErrorMessage);
             Assert.Contains("Customer ID required.", recordResult.ErrorMessage);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ProcessFileWithConfig_SkipsBlankAndTrailingEmptyLines()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, "ABC\n\n  \nDEF\n\n\n");
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("CustomerId", "string", 0, false, null, null, [], [], null) { Name = "CustomerId" }
+            ]);
+
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, new Summary(0, 0, 0, "N/A"));
+
+            Assert.Equal([1, 4], results.Select(r => r.LineCount));
         }
         finally
         {

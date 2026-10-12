@@ -61,7 +61,11 @@ public class ValidatorService : IValidatorService
             // If the line should not be processed (i.e., it's a header), skip it.
             if (!ShouldProcessLine(fileConfig, i))
                 continue;
-            
+
+            // Blank lines (e.g. a trailing newline at the end of the file) carry no record
+            if (string.IsNullOrWhiteSpace(lines[i]))
+                continue;
+
             results.Add(ProcessLine(i + 1, lines[i], fileConfig));
         }
         return results;
