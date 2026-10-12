@@ -17,6 +17,26 @@ namespace validator.Tests
             _validator = new TypeValidator(_mockLogger.Object);
         }
 
+        [Fact]
+        public void Validation_IsIndependentOfCurrentCulture()
+        {
+            var original = System.Globalization.CultureInfo.CurrentCulture;
+            try
+            {
+                System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("de-DE");
+
+                Assert.True(_validator.ValidateDecimal("1234.56"));
+                Assert.True(_validator.ValidateDouble("1.5"));
+                Assert.False(_validator.ValidateDecimal("1.234,56"));
+                Assert.True(_validator.ValidateDate("18/05/2025", new[] { "dd/MM/yyyy" }));
+                Assert.True(_validator.ValidateDateTime("05/18/2025 10:30:00", new[] { "MM/dd/yyyy HH:mm:ss" }));
+            }
+            finally
+            {
+                System.Globalization.CultureInfo.CurrentCulture = original;
+            }
+        }
+
         [Theory]
         [InlineData("123", true)]
         [InlineData("abc", false)]
