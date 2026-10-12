@@ -16,8 +16,9 @@ This project is a .NET console application that validates CSV files against a JS
    ```
 2. **Run the project:**
    ```bash
-   dotnet run --project validator/validator.csproj
+   cd validator && dotnet run
    ```
+   Run it from `validator/`: the app loads `Specifications/` and reads input from `../files/` relative to the working directory, so running from the repo root finds no specifications.
 
 ## Specifications
 This project uses JSON files to define the validation rules for different CSV file types. The following specification files are available:
