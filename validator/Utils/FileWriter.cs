@@ -108,21 +108,20 @@ public static class FileWriter
     }
 
     /// <summary>
-    /// Append the data to a file. If the file does not exist, create it and write to it.
+    /// Append the data to an existing file. The header is never written, as the file already has one.
     /// </summary>
     /// <param name="data"></param>
     /// <param name="fileName"></param>
-    /// <param name="writeHeader"></param>
     /// <param name="delimiter"></param>
     /// <typeparam name="T"></typeparam>
-    static void AppendToFile<T>(IEnumerable<T> data, string fileName, bool writeHeader = true, string delimiter = "|")
+    static void AppendToFile<T>(IEnumerable<T> data, string fileName, string delimiter = "|")
     {
         try{
             // Configure the CSV writer
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 // Don't write the header again.
-                HasHeaderRecord = writeHeader,
+                HasHeaderRecord = false,
                 Delimiter = delimiter
             };
             // Append to file
@@ -152,9 +151,9 @@ public static class FileWriter
     }
 
     /// <summary>
-    /// Check if the file exists.
-    /// If the file exists, return true.
-    /// If the file does not exist, return false.
+    /// Check if the file exists and has content.
+    /// If the file exists and is not empty, return true.
+    /// If the file does not exist or is empty, return false.
     /// This is used to determine if we need to write the header or not.
     /// </summary>
     /// <param name="directoryPath">The path to the directory where the file is located. Default is "../files/outputs/".</param>
@@ -162,10 +161,8 @@ public static class FileWriter
     /// <returns></returns>
     static bool FileExists(string directoryPath, string fileName = "transactions.csv")
     {
-        if(File.Exists($"{directoryPath}/{fileName}"))
-        {
-            return true;
-        }
-        return false;
+        var path = $"{directoryPath}/{fileName}";
+        // An empty file has no header to append under, so treat it as missing
+        return File.Exists(path) && new FileInfo(path).Length > 0;
     }
 }

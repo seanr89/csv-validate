@@ -61,7 +61,11 @@ public class ValidatorService : IValidatorService
             // If the line should not be processed (i.e., it's a header), skip it.
             if (!ShouldProcessLine(fileConfig, i))
                 continue;
-            
+
+            // Blank lines (e.g. a trailing newline at the end of the file) carry no record
+            if (string.IsNullOrWhiteSpace(lines[i]))
+                continue;
+
             results.Add(ProcessLine(i + 1, lines[i], fileConfig));
         }
         return results;
@@ -141,8 +145,7 @@ public class ValidatorService : IValidatorService
 
             // expected values checks - if expected values are set
             // we need to check if the field is in the expected values
-            if (activeValidationConfig.HasExpected != true &&
-                activeValidationConfig.AllowedValues != null &&
+            if (activeValidationConfig.AllowedValues != null &&
                 activeValidationConfig.AllowedValues.Count > 0 &&
                 !activeValidationConfig.AllowedValues.Contains(field.Trim()))
             {
@@ -155,8 +158,18 @@ public class ValidatorService : IValidatorService
             result.AddRecordResult(ProcessFieldByType(lineCount, field, activeValidationConfig, fieldIndex));
         }//End of for loop
 
-        // If we get here without any results, we are valid
-        if (result.RecordResults == null || result.RecordResults.Count == 0)
+        // A short row never reaches the loop above for the trailing columns, so flag every
+        // configured column that has no field. Missing is an error even when the column is nullable
+        // (an empty nullable field still has its delimiter).
+        foreach (var missingConfig in fileConfig.ValidationConfigs.Where(v => v.Index >= fields.Length))
+        {
+            result.AddRecordResult(new RecordResult(lineCount, missingConfig.Index, missingConfig.Name, string.Empty, false,
+                FormatErrorMessage(missingConfig.Index, missingConfig.Name, string.Empty,
+                    $"Column is missing - row has {fields.Length} column(s) but the specification expects at least {missingConfig.Index + 1}", missingConfig.ErrorMessage)));
+        }
+
+        // The line is valid unless a field failed - passing results (e.g. empty nullable fields) don't count
+        if (result.RecordResults == null || result.RecordResults.All(r => r.Valid))
         {
             result.Valid = true;
             result.Message = "Line is valid";

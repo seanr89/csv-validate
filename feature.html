@@ -122,17 +122,17 @@ const ITEMS = [
     title: "allowedValues check is skipped when hasExpected is true",
     detail: "The condition is `HasExpected != true && AllowedValues != null && !Contains(...)`, so a column that sets `hasExpected: true` (CardType in Transaction_Spec.json) is never checked against its allowed values, while one without it (ReversalIndicator) is. The flag reads as the opposite of what it does. Decide what hasExpected means, or drop it and check whenever allowedValues is present.",
     where: "Services/ValidatorService.cs, Specifications/Transaction_Spec.json" },
-  { id: "bug-visa-typo", cat: "bug", pri: "med",
+  { id: "bug-visa-typo", cat: "bug", pri: "med", fixed: true,
     title: "Transaction spec allows \"Vasa\" instead of \"Visa\"",
-    detail: "Hidden today because of the hasExpected bug. Once the allowed-values check is fixed, real Visa rows will be rejected.",
+    detail: "Fixed: `CardType` in `Transaction_Spec.json` now allows \"Visa\" (the allowed values and the error message), and a test loads the shipped spec to keep it that way. Before the fix, real Visa rows would have been rejected once the allowed-values check ran.",
     where: "Specifications/Transaction_Spec.json" },
   { id: "bug-line-valid-flag", cat: "bug", pri: "high",
     title: "Lines with a valid empty nullable field are reported as invalid",
     detail: "`LineResult.Valid` is only set to true when `RecordResults` is empty, but a nullable empty field adds a passing `RecordResult`. Such a line stays `Valid = false` and `App` counts it in the \"has N errors\" total. Failing lines also keep an empty `Message`.",
     where: "Services/ValidatorService.cs (ProcessLine), App.cs" },
-  { id: "bug-short-rows", cat: "bug", pri: "high",
+  { id: "bug-short-rows", cat: "bug", pri: "high", fixed: true,
     title: "Data rows with too few columns pass validation",
-    detail: "`ProcessLine` loops over the fields it finds, so a row missing trailing columns is never flagged (only the header gets a missing/extra column check). Extra columns do fail, but with the vague \"Field index N not found\" and the rest of the line is not checked.",
+    detail: "Fixed: `ProcessLine` now adds a failing `RecordResult` for every spec column that has no field in the row, even when the column is nullable, so short rows are reported invalid. Still open: extra columns fail with the vague \"Field index N not found\" and the rest of the line is not checked.",
     where: "Services/ValidatorService.cs (ProcessLine)" },
   { id: "bug-blank-lines", cat: "bug", pri: "med",
     title: "Blank or trailing empty lines are reported as errors",
@@ -311,6 +311,9 @@ const KEY = "csv-validate-backlog-v1";
 let done = {};
 try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
+// items flagged `fixed: true` in ITEMS count as done for everyone, whatever is saved in this browser
+const seedFixed = () => ITEMS.forEach(i => { if (i.fixed) done[i.id] = true; });
+seedFixed();
 
 const $ = id => document.getElementById(id);
 const state = { q: "", pri: "", hide: false };
@@ -403,7 +406,7 @@ $("hide").addEventListener("click", e => {
 });
 $("reset").addEventListener("click", () => {
   if (Object.keys(done).length && !confirm("Clear all ticks?")) return;
-  done = {}; save(); render();
+  done = {}; seedFixed(); save(); render();
 });
 $("copy").addEventListener("click", async e => {
   const lines = [];

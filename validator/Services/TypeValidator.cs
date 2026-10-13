@@ -1,3 +1,4 @@
+using System.Globalization;
 using validator.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -42,7 +43,7 @@ public class TypeValidator : ITypeValidator
             case "bool":
                 return ValidateBool(value);
             case "date":
-                return ValidateDateTime(value, formats);
+                return ValidateDate(value, formats);
             case "datetime":
                 return ValidateDateTime(value, formats);
             case "double":
@@ -90,7 +91,7 @@ public class TypeValidator : ITypeValidator
         }
         foreach (var format in formats)
         {
-            if (DateTime.TryParseExact(value, format, null, System.Globalization.DateTimeStyles.None, out _))
+            if (DateTime.TryParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
             {
                 return true;
             }
@@ -116,7 +117,7 @@ public class TypeValidator : ITypeValidator
         }
         foreach (var format in formats)
         {
-            if (DateTime.TryParseExact(value, format, null, System.Globalization.DateTimeStyles.None, out _))
+            if (DateTime.TryParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
             {
                 return true;
             }
@@ -135,7 +136,7 @@ public class TypeValidator : ITypeValidator
     /// <returns></returns>
     public bool ValidateDouble(string value)
     {
-        if (double.TryParse(value, out double result))
+        if (double.TryParse(value, CultureInfo.InvariantCulture, out double result))
         {
             return true;
         }
@@ -155,7 +156,7 @@ public class TypeValidator : ITypeValidator
     /// <returns></returns>
     public bool ValidateDecimal(string value)
     {
-        if (decimal.TryParse(value, out decimal result))
+        if (decimal.TryParse(value, CultureInfo.InvariantCulture, out decimal result))
         {
             return true;
         }
@@ -175,7 +176,7 @@ public class TypeValidator : ITypeValidator
     /// <returns></returns>
     public bool ValidateInt(string value)
     {
-        if (int.TryParse(value, out int result))
+        if (int.TryParse(value, CultureInfo.InvariantCulture, out int result))
         {
             return true;
         }

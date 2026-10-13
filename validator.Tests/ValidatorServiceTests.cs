@@ -26,10 +26,11 @@ public class ValidatorServiceTests
         var tempFile = Path.GetTempFileName();
         try
         {
-            File.WriteAllLines(tempFile, [""]); // line 1 empty data row
+            File.WriteAllLines(tempFile, [","]); // line 1 has an empty required field
             var config = new FileConfig("test", ",", false,
             [
-                new ValidationConfig("CustomerId", "string", 0, false, null, null, false, [], [], "Customer ID required.") { Name = "CustomerId" }
+                new ValidationConfig("CustomerId", "string", 0, false, null, null, [], [], "Customer ID required.") { Name = "CustomerId" },
+                new ValidationConfig("Notes", "string", 1, true, null, null, [], [], null) { Name = "Notes" }
             ]);
             var summary = new Summary(0, 0, 0, "N/A");
 
@@ -40,12 +41,34 @@ public class ValidatorServiceTests
             Assert.Single(results);
             var lineResult = results[0];
             Assert.NotNull(lineResult.RecordResults);
-            var recordResult = Assert.Single(lineResult.RecordResults);
+            var recordResult = Assert.Single(lineResult.RecordResults, r => !r.Valid);
             Assert.False(recordResult.Valid);
             Assert.Equal(0, recordResult.FieldIndex);
             Assert.Equal("CustomerId", recordResult.FieldName);
             Assert.Contains("Field 'CustomerId' at index 0: Field is required and cannot be empty", recordResult.ErrorMessage);
             Assert.Contains("Customer ID required.", recordResult.ErrorMessage);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ProcessFileWithConfig_SkipsBlankAndTrailingEmptyLines()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllText(tempFile, "ABC\n\n  \nDEF\n\n\n");
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("CustomerId", "string", 0, false, null, null, [], [], null) { Name = "CustomerId" }
+            ]);
+
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, new Summary(0, 0, 0, "N/A"));
+
+            Assert.Equal([1, 4], results.Select(r => r.LineCount));
         }
         finally
         {
@@ -63,7 +86,7 @@ public class ValidatorServiceTests
             File.WriteAllLines(tempFile, ["AB"]); // length 2
             var config = new FileConfig("test", ",", false,
             [
-                new ValidationConfig("Currency", "string", 0, false, 3, 3, false, [], [], "Currency must be 3 characters.") { Name = "Currency" }
+                new ValidationConfig("Currency", "string", 0, false, 3, 3, [], [], "Currency must be 3 characters.") { Name = "Currency" }
             ]);
             var summary = new Summary(0, 0, 0, "N/A");
 
@@ -98,7 +121,7 @@ public class ValidatorServiceTests
             File.WriteAllLines(tempFile, ["UNKNOWN"]);
             var config = new FileConfig("test", ",", false,
             [
-                new ValidationConfig("Type", "string", 0, false, null, null, false, ["CREDIT", "DEBIT"], [], "Invalid type.") { Name = "Type" }
+                new ValidationConfig("Type", "string", 0, false, null, null, ["CREDIT", "DEBIT"], [], "Invalid type.") { Name = "Type" }
             ]);
             var summary = new Summary(0, 0, 0, "N/A");
 
@@ -123,6 +146,99 @@ public class ValidatorServiceTests
     }
 
     [Fact]
+    public void ProcessFileWithConfig_LineIsValid_WhenOnlyNullableFieldIsEmpty()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, ["ABC,"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Id", "string", 0, false, null, null, [], [], "Id required.") { Name = "Id" },
+                new ValidationConfig("Note", "string", 1, true, null, null, [], [], "Note optional.") { Name = "Note" }
+            ]);
+            _mockTypeValidator.Setup(v => v.ValidateType("ABC", "string", It.IsAny<string[]>())).Returns(true);
+            var summary = new Summary(0, 0, 0, "N/A");
+
+            // Act
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, summary);
+
+            // Assert
+            var lineResult = Assert.Single(results);
+            Assert.True(lineResult.Valid);
+            Assert.Equal("Line is valid", lineResult.Message);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ProcessFileWithConfig_LineIsInvalid_WhenNullableFieldEmptyButAnotherFieldFails()
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, [",", "ABC,"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Id", "string", 0, false, null, null, [], [], "Id required.") { Name = "Id" },
+                new ValidationConfig("Note", "string", 1, true, null, null, [], [], "Note optional.") { Name = "Note" }
+            ]);
+            var summary = new Summary(0, 0, 0, "N/A");
+
+            // Act
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, summary);
+
+            // Assert - first line has an empty required field alongside the empty nullable one
+            Assert.False(results[0].Valid);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)] // missing column is required
+    [InlineData(true)]  // missing column is nullable - the delimiter must still be present
+    public void ProcessFileWithConfig_LineIsInvalid_WhenRowHasTooFewColumns(bool missingColumnNullable)
+    {
+        // Arrange
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, ["ABC"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Id", "string", 0, false, null, null, [], [], "Id required.") { Name = "Id" },
+                new ValidationConfig("Note", "string", 1, missingColumnNullable, null, null, [], [], "Note error.") { Name = "Note" }
+            ]);
+            _mockTypeValidator.Setup(v => v.ValidateType("ABC", "string", It.IsAny<string[]>())).Returns(true);
+            var summary = new Summary(0, 0, 0, "N/A");
+
+            // Act
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, summary);
+
+            // Assert
+            var lineResult = Assert.Single(results);
+            Assert.False(lineResult.Valid);
+            Assert.NotNull(lineResult.RecordResults);
+            var missing = Assert.Single(lineResult.RecordResults, r => !r.Valid);
+            Assert.Equal(1, missing.FieldIndex);
+            Assert.Equal("Note", missing.FieldName);
+            Assert.Contains("missing", missing.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
     public void ProcessFileWithConfig_DescriptiveError_WhenTypeValidationFails()
     {
         // Arrange
@@ -134,7 +250,7 @@ public class ValidatorServiceTests
 
             var config = new FileConfig("test", ",", false,
             [
-                new ValidationConfig("Amount", "decimal", 0, false, null, null, false, [], [], "Amount must be a decimal.") { Name = "Amount" }
+                new ValidationConfig("Amount", "decimal", 0, false, null, null, [], [], "Amount must be a decimal.") { Name = "Amount" }
             ]);
             var summary = new Summary(0, 0, 0, "N/A");
 
