@@ -62,6 +62,64 @@ public class SpecificationSelectorTests : IDisposable
         Assert.NotNull(selector.GetFileConfig("TestType2"));
     }
 
+    [Fact]
+    public void SkipsMalformedJsonSpec_WithoutCrashing()
+    {
+        var brokenJsonFile = Path.Combine(_testDir, "Broken.json");
+        File.WriteAllText(brokenJsonFile, "{ not valid json ");
+
+        var selector = new SpecificationSelectorForTest(_testDir);
+        Assert.NotNull(selector.GetFileConfig("TestType1"));
+        Assert.Null(selector.GetFileConfig("Broken"));
+    }
+
+    [Fact]
+    public void SkipsSpec_WhenColumnTypeIsMissing()
+    {
+        var missingTypeFile = Path.Combine(_testDir, "MissingType.json");
+        File.WriteAllText(missingTypeFile, """
+        {
+            "fileType": "MissingType",
+            "delimiter": ",",
+            "headerLine": true,
+            "validationConfigs": [
+                {
+                    "name": "FieldA",
+                    "index": 0,
+                    "isNullable": false
+                }
+            ]
+        }
+        """);
+
+        var selector = new SpecificationSelectorForTest(_testDir);
+        Assert.Null(selector.GetFileConfig("MissingType"));
+        Assert.NotNull(selector.GetFileConfig("TestType1"));
+    }
+
+    [Fact]
+    public void SkipsSpec_WhenColumnNameIsMissing()
+    {
+        var missingNameFile = Path.Combine(_testDir, "MissingName.json");
+        File.WriteAllText(missingNameFile, """
+        {
+            "fileType": "MissingName",
+            "delimiter": ",",
+            "headerLine": true,
+            "validationConfigs": [
+                {
+                    "type": "string",
+                    "index": 0,
+                    "isNullable": false
+                }
+            ]
+        }
+        """);
+
+        var selector = new SpecificationSelectorForTest(_testDir);
+        Assert.Null(selector.GetFileConfig("MissingName"));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_testDir))

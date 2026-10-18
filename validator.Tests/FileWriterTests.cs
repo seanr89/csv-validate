@@ -60,4 +60,57 @@ public class FileWriterTests : IDisposable
         Assert.StartsWith("LineCount", lines[0]);
         Assert.Contains("first", lines[1]);
     }
+
+    [Fact]
+    public void WriteToJson_CreatesOutputDirectory_WhenItDoesNotExist()
+    {
+        // Arrange
+        var outputs = Path.Combine(_root, "files", "outputs");
+        Assert.False(Directory.Exists(outputs));
+
+        // Act
+        FileWriter.WriteToJson("../files/transactions.csv", [new LineResult(1, true, "Line is valid")]);
+
+        // Assert
+        var jsonPath = Path.Combine(outputs, "transactions.json");
+        Assert.True(File.Exists(jsonPath));
+        Assert.Contains("Line is valid", File.ReadAllText(jsonPath));
+    }
+
+    [Fact]
+    public void WriteToJson_ExtractsFileName_FromWindowsStylePath()
+    {
+        // Act
+        FileWriter.WriteToJson(@"..\files\transactions.csv", [new LineResult(1, true, "Line is valid")]);
+
+        // Assert
+        var jsonPath = Path.Combine(_root, "files", "outputs", "transactions.json");
+        Assert.True(File.Exists(jsonPath));
+    }
+
+    [Fact]
+    public void TryWriteOrAppendToFile_WritesToCustomOutputDirectory_WhenProvided()
+    {
+        var customDir = Path.Combine(_root, "custom_out");
+
+        FileWriter.TryWriteOrAppendToFile([new RecordResult(1, "A", false, "custom")], "custom.csv", outputDirectory: customDir);
+
+        var filePath = Path.Combine(customDir, "custom.csv");
+        Assert.True(File.Exists(filePath));
+        var lines = File.ReadAllLines(filePath);
+        Assert.Equal(2, lines.Length);
+        Assert.Contains("custom", lines[1]);
+    }
+
+    [Fact]
+    public void WriteToJson_WritesToCustomOutputDirectory_WhenProvided()
+    {
+        var customDir = Path.Combine(_root, "custom_json_out");
+
+        FileWriter.WriteToJson("test.csv", [new LineResult(1, true, "Valid custom")], outputDirectory: customDir);
+
+        var filePath = Path.Combine(customDir, "test.json");
+        Assert.True(File.Exists(filePath));
+        Assert.Contains("Valid custom", File.ReadAllText(filePath));
+    }
 }

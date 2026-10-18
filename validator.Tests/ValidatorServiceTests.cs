@@ -274,4 +274,146 @@ public class ValidatorServiceTests
             if (File.Exists(tempFile)) File.Delete(tempFile);
         }
     }
+
+    [Fact]
+    public void ProcessFileWithConfig_PopulatesSummary_WithTotalsAndFileName()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, ["ABC", "", "DEF"]);
+            _mockTypeValidator.Setup(v => v.ValidateType("ABC", "string", It.IsAny<string[]>())).Returns(true);
+            _mockTypeValidator.Setup(v => v.ValidateType("DEF", "string", It.IsAny<string[]>())).Returns(false);
+
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Id", "string", 0, false, null, null, [], [], "Invalid id.") { Name = "Id" }
+            ]);
+            var summary = new Summary(0, 0, 0, "N/A");
+
+            _validatorService.ProcessFileWithConfig(tempFile, config, summary);
+
+            Assert.Equal(Path.GetFileName(tempFile), summary.FileName);
+            Assert.Equal(2, summary.TotalRecords);
+            Assert.Equal(1, summary.ValidRecords);
+            Assert.Equal(1, summary.InvalidRecords);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ProcessFileWithConfig_LineFails_WhenRowHasExtraUnconfiguredColumns()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, ["A,B,EXTRA"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Col1", "string", 0, false, null, null, [], [], "") { Name = "Col1" },
+                new ValidationConfig("Col2", "string", 1, false, null, null, [], [], "") { Name = "Col2" }
+            ]);
+            _mockTypeValidator.Setup(v => v.ValidateType(It.IsAny<string>(), "string", It.IsAny<string[]>())).Returns(true);
+
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, new Summary(0, 0, 0, "N/A"));
+
+            var lineResult = Assert.Single(results);
+            Assert.False(lineResult.Valid);
+            Assert.Contains("Field index 2 not found in validation configs", lineResult.Message);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ProcessFileWithConfig_DescriptiveError_WhenMaxLengthExceeded()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, ["TOOLONG"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Code", "string", 0, false, null, 3, [], [], "Max 3 chars.") { Name = "Code" }
+            ]);
+
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, new Summary(0, 0, 0, "N/A"));
+
+            var lineResult = Assert.Single(results);
+            Assert.False(lineResult.Valid);
+            var record = Assert.Single(lineResult.RecordResults!);
+            Assert.False(record.Valid);
+            Assert.Contains("exceeds maximum length (3)", record.ErrorMessage);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ProcessFileWithConfig_ValidMultiFieldRow_PassesValidation()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, ["ID1,Active,2025-01-01"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Id", "string", 0, false, 1, 10, [], [], "") { Name = "Id" },
+                new ValidationConfig("Status", "string", 1, false, null, null, ["Active", "Inactive"], [], "") { Name = "Status" },
+                new ValidationConfig("Date", "date", 2, false, null, null, [], ["yyyy-MM-dd"], "") { Name = "Date" }
+            ]);
+            _mockTypeValidator.Setup(v => v.ValidateType("ID1", "string", It.IsAny<string[]>())).Returns(true);
+            _mockTypeValidator.Setup(v => v.ValidateType("Active", "string", It.IsAny<string[]>())).Returns(true);
+            _mockTypeValidator.Setup(v => v.ValidateType("2025-01-01", "date", It.IsAny<string[]>())).Returns(true);
+
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, new Summary(0, 0, 0, "N/A"));
+
+            var lineResult = Assert.Single(results);
+            Assert.True(lineResult.Valid);
+            Assert.Equal("Line is valid", lineResult.Message);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void ValidatorService_SupportsCustomRuleInjection()
+    {
+        var customRuleMock = new Mock<validator.Services.Rules.IFieldRule>();
+        customRuleMock.Setup(r => r.Validate(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<ValidationConfig>()))
+            .Returns(new validator.Services.Rules.FieldRuleResult(
+                new RecordResult(1, 0, "CustomCol", "VAL", false, "Custom rule failure"), false));
+
+        var customService = new ValidatorService(_mockTypeValidator.Object, _mockHeaderValidator.Object, [customRuleMock.Object]);
+
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, ["VAL"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("CustomCol", "string", 0, false, null, null, [], [], "") { Name = "CustomCol" }
+            ]);
+
+            var results = customService.ProcessFileWithConfig(tempFile, config, new Summary(0, 0, 0, "N/A"));
+
+            var lineResult = Assert.Single(results);
+            Assert.False(lineResult.Valid);
+            var record = Assert.Single(lineResult.RecordResults!);
+            Assert.Equal("Custom rule failure", record.ErrorMessage);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
 }

@@ -8,7 +8,10 @@ using validator.Models;
 public static class FileWriter
 {
 
-    private static void CheckAndCreateDirectory(string directoryPath = "../files/outputs"){
+    public static string DefaultOutputDirectory { get; set; } = "../files/outputs";
+
+    private static void CheckAndCreateDirectory(string directoryPath)
+    {
         if(!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);
@@ -20,18 +23,20 @@ public static class FileWriter
     /// If the file does not exist, create it and write to it.
     /// </summary>
     /// <param name="data"></param>
+    /// <param name="fileName"></param>
+    /// <param name="outputDirectory"></param>
     /// <typeparam name="T"></typeparam>
-    public static void TryWriteOrAppendToFile<T>(IEnumerable<T> data, string fileName = "transactions.csv")
+    public static void TryWriteOrAppendToFile<T>(IEnumerable<T> data, string fileName = "transactions.csv", string? outputDirectory = null)
     {
-        string directoryPath = "../files/outputs/";
+        string directoryPath = outputDirectory ?? DefaultOutputDirectory;
         CheckAndCreateDirectory(directoryPath);
-        if(FileExists(directoryPath,fileName))
+        if(FileExists(directoryPath, fileName))
         {
-            AppendToFile(data, fileName);
+            AppendToFile(data, fileName, directoryPath: directoryPath);
         }
         else
         {
-            WriteToFile(data, fileName);
+            WriteToFile(data, fileName, directoryPath: directoryPath);
         }
     }
     
@@ -39,16 +44,17 @@ public static class FileWriter
     /// Save the results to a JSON file
     /// This will create a new file in the outputs directory
     /// and write the results to it
-    /// The file name will be the same as the input file
-    /// but with a .json extension
-    /// and the path will be ../files/outputs/
     /// </summary>
     /// <param name="filePath"></param>
     /// <param name="results"></param>
-    public static void WriteToJson(string filePath, List<LineResult> results)
+    /// <param name="outputDirectory"></param>
+    public static void WriteToJson(string filePath, List<LineResult> results, string? outputDirectory = null)
     {
-        string outPutName = filePath.Replace(".csv", ".json").Split("/").Last();
-        string outPutPath = Path.Combine("../files/outputs/", outPutName);
+        string directoryPath = outputDirectory ?? DefaultOutputDirectory;
+        CheckAndCreateDirectory(directoryPath);
+        string fileName = Path.GetFileName(filePath.Replace('\\', '/'));
+        string outPutName = Path.ChangeExtension(fileName, ".json");
+        string outPutPath = Path.Combine(directoryPath, outPutName);
 
         // create JSON configuration for newtonsoft
         using StringWriter sw = new StringWriter();
@@ -68,31 +74,24 @@ public static class FileWriter
             file.WriteLine(json);
             file.Flush();
             file.Close();
-            //AnsiConsole.MarkupLine($"[green]Wrote results to {outPutPath}[/]");
         }
     }
 
     /// <summary>
     /// Write the data to a file. If the file does not exist, create it and write to it.
     /// </summary>
-    /// <param name="data"></param>
-    /// <param name="fileName"></param>
-    /// <param name="writeHeader"></param>
-    /// <param name="delimiter"></param>
-    /// <typeparam name="T"></typeparam>
-    static void WriteToFile<T>(IEnumerable<T> data, string fileName, bool writeHeader = true, string delimiter = "|")
+    static void WriteToFile<T>(IEnumerable<T> data, string fileName, bool writeHeader = true, string delimiter = "|", string? directoryPath = null)
     {
-        // Write to file
+        directoryPath ??= DefaultOutputDirectory;
         try
         {
-            // Append to the file.
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
-                // Don't write the header again.
                 HasHeaderRecord = writeHeader,
                 Delimiter = delimiter
             };
-            using (var writer = new StreamWriter($"../files/outputs/{fileName}"))
+            var fullPath = Path.Combine(directoryPath, fileName);
+            using (var writer = new StreamWriter(fullPath))
             using (var csv = new CsvWriter(writer, config))
             {
                 var options = new TypeConverterOptions { Formats = ["dd/MM/yyyy"] };
@@ -102,7 +101,6 @@ public static class FileWriter
         }
         catch (Exception e)
         {
-            // Log error
             Console.WriteLine($"Error writing to file: {e.Message}");
         }
     }
@@ -110,24 +108,20 @@ public static class FileWriter
     /// <summary>
     /// Append the data to an existing file. The header is never written, as the file already has one.
     /// </summary>
-    /// <param name="data"></param>
-    /// <param name="fileName"></param>
-    /// <param name="delimiter"></param>
-    /// <typeparam name="T"></typeparam>
-    static void AppendToFile<T>(IEnumerable<T> data, string fileName, string delimiter = "|")
+    static void AppendToFile<T>(IEnumerable<T> data, string fileName, string delimiter = "|", string? directoryPath = null)
     {
-        try{
-            // Configure the CSV writer
+        directoryPath ??= DefaultOutputDirectory;
+        try
+        {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
-                // Don't write the header again.
                 HasHeaderRecord = false,
                 Delimiter = delimiter
             };
-            // Append to file
             try
             {    
-                using (var stream = File.Open($"../files/outputs/{fileName}", FileMode.Append))
+                var fullPath = Path.Combine(directoryPath, fileName);
+                using (var stream = File.Open(fullPath, FileMode.Append))
                 using (var writer = new StreamWriter(stream))
                 using (var csv = new CsvWriter(writer, config))
                 {
@@ -136,33 +130,24 @@ public static class FileWriter
                     csv.WriteRecords(data);
                 }
             }
-            catch( Exception e)
+            catch (Exception e)
             {
-                // Log error
                 Console.WriteLine($"Error opening file for appending: {e.Message}");
                 return;
             }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
-            // Log error
             Console.WriteLine($"Error appending to file: {e.Message}");
         }
     }
 
     /// <summary>
     /// Check if the file exists and has content.
-    /// If the file exists and is not empty, return true.
-    /// If the file does not exist or is empty, return false.
-    /// This is used to determine if we need to write the header or not.
     /// </summary>
-    /// <param name="directoryPath">The path to the directory where the file is located. Default is "../files/outputs/".</param>
-    /// <param name="fileName">The name of the file to check. Default is "transactions.csv".</param>
-    /// <returns></returns>
     static bool FileExists(string directoryPath, string fileName = "transactions.csv")
     {
-        var path = $"{directoryPath}/{fileName}";
-        // An empty file has no header to append under, so treat it as missing
+        var path = Path.Combine(directoryPath, fileName);
         return File.Exists(path) && new FileInfo(path).Length > 0;
     }
 }
