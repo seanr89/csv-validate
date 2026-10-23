@@ -50,8 +50,8 @@ public class LengthFieldRule : IFieldRule
 {
     public FieldRuleResult Validate(int lineCount, int fieldIndex, string field, ValidationConfig config)
     {
-        var minLength = config.MinLength ?? config.minLength;
-        var maxLength = config.MaxLength ?? config.maxLength;
+        var minLength = config.MinLength;
+        var maxLength = config.MaxLength;
 
         if (minLength != null && field.Length < minLength)
         {
@@ -82,8 +82,8 @@ public class AllowedValuesFieldRule : IFieldRule
 {
     public FieldRuleResult Validate(int lineCount, int fieldIndex, string field, ValidationConfig config)
     {
-        var allowedValues = config.AllowedValues ?? config.allowedValues;
-        if (allowedValues != null && allowedValues.Count > 0 && !allowedValues.Contains(field.Trim()))
+        var allowedValues = config.AllowedValues;
+        if (allowedValues != null && allowedValues.Count > 0 && !allowedValues.Contains(field))
         {
             var message = RuleMessageFormatter.FormatErrorMessage(
                 fieldIndex, config.Name, field,
@@ -110,8 +110,8 @@ public class TypeFieldRule : IFieldRule
 
     public FieldRuleResult Validate(int lineCount, int fieldIndex, string field, ValidationConfig config)
     {
-        var expectedType = config.Type ?? config.type ?? string.Empty;
-        var formats = config.Formats ?? config.formats;
+        var expectedType = config.Type ?? string.Empty;
+        var formats = config.Formats;
 
         bool typeResult = _typeValidator.ValidateType(field, expectedType, formats);
         if (!typeResult)

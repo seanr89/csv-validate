@@ -416,4 +416,65 @@ public class ValidatorServiceTests
             if (File.Exists(tempFile)) File.Delete(tempFile);
         }
     }
+
+    [Fact]
+    public void AllowedValuesFieldRule_DoesNotTrimValue_RejectsUntrimmedValueNotInAllowedList()
+    {
+        var rule = new validator.Services.Rules.AllowedValuesFieldRule();
+        var config = new ValidationConfig("Indicator", "string", 0, false, null, null, ["Y", "N"], [], "Invalid indicator.")
+        {
+            Name = "Indicator"
+        };
+
+        var result = rule.Validate(1, 0, " Y", config);
+
+        Assert.False(result.ShouldContinue);
+        Assert.NotNull(result.RecordResult);
+        Assert.False(result.RecordResult.Valid);
+        Assert.Contains("Value ' Y' is not in allowed values: [Y, N]", result.RecordResult.ErrorMessage);
+    }
+
+    [Fact]
+    public void AllowedValuesFieldRule_MatchesValueWithWhitespace_WhenExplicitlyInAllowedList()
+    {
+        var rule = new validator.Services.Rules.AllowedValuesFieldRule();
+        var config = new ValidationConfig("Padded", "string", 0, false, null, null, [" Y "], [], "")
+        {
+            Name = "Padded"
+        };
+
+        var result = rule.Validate(1, 0, " Y ", config);
+
+        Assert.True(result.ShouldContinue);
+        Assert.Null(result.RecordResult);
+    }
+
+    [Fact]
+    public void ProcessFileWithConfig_ConsistentTrimming_RejectsValueWithWhitespaceInAllowedValues()
+    {
+        var tempFile = Path.GetTempFileName();
+        try
+        {
+            File.WriteAllLines(tempFile, [" Y"]);
+            var config = new FileConfig("test", ",", false,
+            [
+                new ValidationConfig("Indicator", "string", 0, false, null, 10, ["Y", "N"], [], "Reversal indicator must be Y or N.")
+                {
+                    Name = "Indicator"
+                }
+            ]);
+
+            var results = _validatorService.ProcessFileWithConfig(tempFile, config, new Summary(0, 0, 0, "N/A"));
+
+            var lineResult = Assert.Single(results);
+            Assert.False(lineResult.Valid);
+            var recordResult = Assert.Single(lineResult.RecordResults!);
+            Assert.False(recordResult.Valid);
+            Assert.Contains("Value ' Y' is not in allowed values: [Y, N]", recordResult.ErrorMessage);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
+    }
 }

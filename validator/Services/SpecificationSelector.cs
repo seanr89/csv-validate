@@ -198,7 +198,7 @@ public class SpecificationSelector : ISpecificationSelector
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(col.type) && string.IsNullOrWhiteSpace(col.Type))
+            if (string.IsNullOrWhiteSpace(col.Type))
             {
                 Console.WriteLine($"Error in specification file '{filePath}': column '{col.Name}' at index {col.Index} is missing 'type'.");
                 return false;
