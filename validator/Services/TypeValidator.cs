@@ -34,6 +34,12 @@ public class TypeValidator : ITypeValidator
     /// <returns></returns>
     public bool ValidateType(string value, string expectedType, string[]? formats)
     {
+        if (string.IsNullOrWhiteSpace(expectedType))
+        {
+            _logger.LogWarning("Expected type is null or empty");
+            return false;
+        }
+
         switch (expectedType.ToLower())
         {
             case "int":
@@ -136,7 +142,7 @@ public class TypeValidator : ITypeValidator
     /// <returns></returns>
     public bool ValidateDouble(string value)
     {
-        if (double.TryParse(value, CultureInfo.InvariantCulture, out double result))
+        if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double result))
         {
             return true;
         }
@@ -156,7 +162,7 @@ public class TypeValidator : ITypeValidator
     /// <returns></returns>
     public bool ValidateDecimal(string value)
     {
-        if (decimal.TryParse(value, CultureInfo.InvariantCulture, out decimal result))
+        if (decimal.TryParse(value, NumberStyles.Number & ~NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out decimal result))
         {
             return true;
         }
@@ -176,7 +182,7 @@ public class TypeValidator : ITypeValidator
     /// <returns></returns>
     public bool ValidateInt(string value)
     {
-        if (int.TryParse(value, CultureInfo.InvariantCulture, out int result))
+        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result))
         {
             return true;
         }
