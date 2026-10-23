@@ -13,17 +13,20 @@ public class App
     private readonly ILogger<App> _logger;
     private readonly IValidatorService _validatorService;
     private readonly ISpecificationSelector _specificationSelector;
+    private readonly IFileWriter _fileWriter;
     private readonly RunSettings _runSettings;
 
     public App(
         ILogger<App> logger,
         IValidatorService validatorService,
         ISpecificationSelector specificationSelector,
+        IFileWriter? fileWriter = null,
         IOptions<RunSettings>? runSettingsOptions = null)
     {
         _logger = logger;
         _validatorService = validatorService;
         _specificationSelector = specificationSelector;
+        _fileWriter = fileWriter ?? new Services.FileWriter();
         _runSettings = runSettingsOptions?.Value ?? new RunSettings();
     }
 
@@ -98,11 +101,11 @@ public class App
 
                     // write to csv (we need to grab the records from the results)
                     var records = csvResults.SelectMany(r => r.RecordResults ?? Enumerable.Empty<RecordResult>()).ToList();
-                    FileWriter.TryWriteOrAppendToFile(records, $"{fileType}_results.csv", outputDirectory: outputDir);
+                    _fileWriter.TryWriteOrAppendToFile(records, $"{fileType}_results.csv", outputDirectory: outputDir);
                 }
                 else
                 {
-                    FileWriter.WriteToJson(file, results, outputDirectory: outputDir);
+                    _fileWriter.WriteToJson(file, results, outputDirectory: outputDir);
                 }
             }
 
