@@ -30,8 +30,10 @@ public class TransactionSpecTests
     {
         var cardType = Assert.Single(LoadTransactionSpec().ValidationConfigs, c => c.Name == "CardType");
 
+        Assert.NotNull(cardType.AllowedValues);
         Assert.Contains("Visa", cardType.AllowedValues);
         Assert.DoesNotContain("Vasa", cardType.AllowedValues);
+        Assert.NotNull(cardType.ErrorMessage);
         Assert.Contains("Visa", cardType.ErrorMessage);
         Assert.DoesNotContain("Vasa", cardType.ErrorMessage);
     }

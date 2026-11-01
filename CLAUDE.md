@@ -30,25 +30,25 @@ CI (`.github/workflows/build.yml`) restores, builds Release, and runs tests on p
 
 The app is a single console process that validates delimited files against JSON specifications.
 
-**Startup (`validator/Program.cs`)**: builds a Generic Host, registers services by interface (`IHeaderValidator`, `ITypeValidator`, `IValidatorService`, `ISpecificationSelector`) and the `App` singleton, and binds the `RunSettings` config section. `RunSettings` (inbox/outbox prefixes, storage type) is bound but not used by the current flow.
+**Startup (`validator/Program.cs`)**: builds a Generic Host, registers services by interface (`IHeaderValidator`, `ITypeValidator`, `IValidatorService`, `ISpecificationSelector`) and the `App` singleton, and binds the `RunSettings` config section. `RunSettings` (`InboxPrefix`/`OutboxPrefix`) configures input file and output directories.
 
 **Run flow (`validator/App.cs`)**:
 1. The user picks a file type (`transactions`, `account`, `customer`, `card`).
-2. `SpecificationSelector` (constructed with all `Specifications/*.json` already loaded) returns the matching `FileConfig`.
-3. The input is `../files/{type}.csv` (exact name match, relative to `validator/`).
+2. `SpecificationSelector` (resolved against `AppContext.BaseDirectory` / copied specifications) returns the matching `FileConfig`.
+3. Input files are discovered in the resolved `InboxPrefix` directory (e.g. `files/{type}.csv`).
 4. `ValidatorService.ProcessFileWithConfig` produces a `List<LineResult>`, each holding `RecordResult`s for the failing fields.
-5. The user is optionally prompted to write results with `FileWriter` as CSV (`../files/outputs/{type}_results.csv`, append if it exists) or JSON (`../files/outputs/{input}.json`).
+5. The user is optionally prompted to write results with `FileWriter` as CSV (`{OutboxPrefix}/{type}_results.csv`, append if it exists) or JSON (`{OutboxPrefix}/{input}.json`).
 
 **Specifications (`validator/Specifications/*.json`)**: one file per type, deserialized with Newtonsoft into `FileConfig` (`fileType`, `delimiter`, `headerLine`, `validationConfigs`). Each `ValidationConfig` describes one column by `index`, with `type`, `isNullable`, `minLength`/`maxLength`, `allowedValues`, `formats` (for dates), and an `errorMessage` shown on failure. Adding a new file type means adding a JSON spec and a matching menu entry in `App.Run`, which is hard-coded.
 
-**Per-line validation (`Services/ValidatorService.cs`)**: a line is split by the spec delimiter, and each field is checked in this order: null/empty (respecting `isNullable`), min/max length, allowed-values list, then type via `ITypeValidator`. A field index with no config yields a line-level error. A spec column with no field in the row (a short row) yields a failing `RecordResult` for that column, even if it is nullable. When `headerLine` is true, line 1 goes through `HeaderValidator` and is skipped as data.
+**Per-line validation (`Services/ValidatorService.cs`)**: a line is split by the spec delimiter, and each field is evaluated via a modular pipeline of `IFieldRule` rule checkers (`RequiredFieldRule`, `LengthFieldRule`, `AllowedValuesFieldRule`, `TypeFieldRule`). A field index with no config yields a line-level error. A spec column with no field in the row (a short row) yields a failing `RecordResult` for that column, even if it is nullable. When `headerLine` is true, line 1 goes through `HeaderValidator` and is skipped as data.
 
 **Type and header checks**: `TypeValidator` handles `int`, `string` (always valid), `bool`, `date` and `datetime` (using `formats`, falling back to date-only or date-time defaults when none are given), `double`, and `decimal`. Unknown types return `false`. `HeaderValidator` matches header names to config names case-insensitively, and column-count checks are shared in `Utils/ValidationUtils.cs`.
 
-**Results model (`Models/`)**: `LineResult` holds the line number, validity, message, and record results. `RecordResult` holds the per-field failure. `Summary` is created in `App` but is not populated, so its output shows `N/A`.
+**Results model (`Models/`)**: `LineResult` holds the line number, validity, message, and record results. `RecordResult` holds the per-field failure. `Summary` is populated by `ValidatorService.ProcessFileWithConfig` with the file name and total/valid/invalid record counts.
 
 ## Gotchas
 
-- The `Specifications` and `../files` paths are not resolved from the binary location. Running from anywhere other than `validator/` finds no specs or input files.
-- The `RemoveAt(0)` on the header result happens only in the CSV write branch, so JSON output still includes the header entry.
+- The `Specifications` and input/output paths resolve against `AppContext.BaseDirectory`, `RunSettings`, or the working directory, working seamlessly from both `validator/` and the repo root.
+- Skipping the header result (`results.Skip(1)`) happens only in the CSV write branch, so JSON output still includes the header entry.
 - `TODO.md` is an auto-generated backlog; several listed bugs are already marked fixed.

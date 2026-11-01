@@ -1,4 +1,4 @@
-﻿namespace validator;
+namespace validator;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +27,7 @@ class Program
                 services.AddTransient<ITypeValidator, TypeValidator>();
                 services.AddTransient<IValidatorService, ValidatorService>();
                 services.AddTransient<ISpecificationSelector, SpecificationSelector>();
+                services.AddTransient<IFileWriter, FileWriter>();
 
                 // Bind the RunSettings section
                 services.Configure<RunSettings>(config.GetSection("RunSettings"));

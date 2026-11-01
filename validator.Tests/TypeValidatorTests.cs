@@ -26,7 +26,10 @@ namespace validator.Tests
                 System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("de-DE");
 
                 Assert.True(_validator.ValidateDecimal("1234.56"));
+                Assert.True(_validator.ValidateDecimal("65.25"));
                 Assert.True(_validator.ValidateDouble("1.5"));
+                Assert.False(_validator.ValidateDecimal("1,5"));
+                Assert.False(_validator.ValidateDouble("1,5"));
                 Assert.False(_validator.ValidateDecimal("1.234,56"));
                 Assert.True(_validator.ValidateDate("18/05/2025", new[] { "dd/MM/yyyy" }));
                 Assert.True(_validator.ValidateDateTime("05/18/2025 10:30:00", new[] { "MM/dd/yyyy HH:mm:ss" }));
@@ -35,6 +38,15 @@ namespace validator.Tests
             {
                 System.Globalization.CultureInfo.CurrentCulture = original;
             }
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void ValidateType_ReturnsFalse_WhenExpectedTypeIsNullOrWhitespace(string? expectedType)
+        {
+            Assert.False(_validator.ValidateType("123", expectedType!, null));
         }
 
         [Theory]

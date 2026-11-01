@@ -1,5 +1,6 @@
 using validator.Models;
 using validator.Services.Interfaces;
+using validator.Services.Rules;
 
 namespace validator.Services;
 
@@ -7,22 +8,26 @@ public class ValidatorService : IValidatorService
 {
     private readonly ITypeValidator _typeValidator;
     private readonly IHeaderValidator _headerValidator;
+    private readonly IReadOnlyList<IFieldRule> _fieldRules;
 
     public ValidatorService(ITypeValidator typeValidator, IHeaderValidator headerValidator)
+        : this(typeValidator, headerValidator, null)
     {
-        _headerValidator = headerValidator;
-        // Inject the type validator to handle type-specific validations
-        // This will be used to validate the field types based on the validation config
-        _typeValidator = typeValidator;
     }
 
-    /// <summary>
-    /// Simple job to intake a file path and a file config for processing
-    /// This will process the file and return a list of results
-    /// </summary>
-    /// <param name="filePath"></param>
-    /// <param name="fileConfig"></param>
-    /// <returns></returns>
+    public ValidatorService(ITypeValidator typeValidator, IHeaderValidator headerValidator, IEnumerable<IFieldRule>? customRules)
+    {
+        _headerValidator = headerValidator;
+        _typeValidator = typeValidator;
+        _fieldRules = customRules?.ToList() ??
+        [
+            new RequiredFieldRule(),
+            new LengthFieldRule(),
+            new AllowedValuesFieldRule(),
+            new TypeFieldRule(_typeValidator)
+        ];
+    }
+
     /// <summary>
     /// Simple job to intake a file path and a file config for processing
     /// This will process the file and return a list of results
@@ -42,6 +47,7 @@ public class ValidatorService : IValidatorService
         if (lines.Length == 0)
         {
             results.Add(new LineResult(0, false, "File is empty"));
+            PopulateSummary(summary, filePath, results);
             return results;
         }
 
@@ -68,7 +74,23 @@ public class ValidatorService : IValidatorService
 
             results.Add(ProcessLine(i + 1, lines[i], fileConfig));
         }
+
+        PopulateSummary(summary, filePath, results);
         return results;
+    }
+
+    private static void PopulateSummary(Summary? summary, string filePath, List<LineResult> results)
+    {
+        if (summary == null)
+        {
+            return;
+        }
+
+        summary.FileName = Path.GetFileName(filePath.Replace('\\', '/'));
+        summary.TotalRecords = results.Count;
+        summary.ValidRecords = results.Count(r => r.Valid);
+        summary.InvalidRecords = results.Count(r => !r.Valid);
+        summary.ProcessedAt = DateTime.Now;
     }
     
     /// <summary>
@@ -87,84 +109,40 @@ public class ValidatorService : IValidatorService
     }
 
     /// <summary>
-    /// Handle single live processing of a line
-    /// This will process the line and return a result
+    /// Handle single line processing of a line.
+    /// Evaluates rules per column and returns a line result.
     /// </summary>
     /// <param name="lineCount">current line increment count</param>
-    /// <param name="line">file line record!</param>
+    /// <param name="line">file line record</param>
     /// <param name="fileConfig"></param>
     /// <returns></returns>
     private LineResult ProcessLine(int lineCount, string line, FileConfig fileConfig)
     {
-        var result = new LineResult(lineCount, false, string.Empty);
-        // Split the line up properly by the delimiter
-        var fields = line.Split(fileConfig.Delimiter);
-        //Check for empty lines?
-        if(fields.Length <= 0)
+        if (string.IsNullOrWhiteSpace(line))
         {
-            //Console.WriteLine($"ValidatorService::ProcessLine: {lineCount} - no fields");
-            result = new LineResult(lineCount, false, "No fields found");
-            return result;
+            return new LineResult(lineCount, false, "No fields found");
         }
 
-        // here we now want to invoke the validation for each field step by step
+        var fields = line.Split(fileConfig.Delimiter);
+        var result = new LineResult(lineCount, false, string.Empty);
+
         for (int fieldIndex = 0; fieldIndex < fields.Length; fieldIndex++)
         {
-            // Pull the field and the expected validation config out!
             var field = fields[fieldIndex];
-            var validationConfig = fileConfig.ValidationConfigs.FirstOrDefault(
-                    v => v.Index == fieldIndex);
+            var validationConfig = fileConfig.ValidationConfigs.FirstOrDefault(v => v.Index == fieldIndex);
             if (validationConfig == null)
             {
-                // If the field is not found in the validation configs, add an error result
-                result = new LineResult(lineCount, false, $"Field index {fieldIndex} not found in validation configs");
-                return result;
-            }
-            var activeValidationConfig = validationConfig;
-
-            // Now lets to null check?
-            if (string.IsNullOrEmpty(field) && !activeValidationConfig.IsNullable)
-            {
-                result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, false,
-                    FormatErrorMessage(fieldIndex, activeValidationConfig.Name, field, "Field is required and cannot be empty", activeValidationConfig.ErrorMessage)));
-                continue;
+                return new LineResult(lineCount, false, $"Field index {fieldIndex} not found in validation configs");
             }
 
-            // check for null with allowance and skip if needed
-            if (string.IsNullOrEmpty(field) && activeValidationConfig.IsNullable)
-            {
-                result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, true, string.Empty));
-                continue;
-            }
+            ValidateField(lineCount, fieldIndex, field, validationConfig, result);
+        }
 
-            bool flowControl = ProcessMinandMaxLengths(lineCount, result, field, activeValidationConfig, fieldIndex);
-            if (!flowControl)
-            {
-                continue;
-            }
-
-            // expected values checks - if expected values are set
-            // we need to check if the field is in the expected values
-            if (activeValidationConfig.AllowedValues != null &&
-                activeValidationConfig.AllowedValues.Count > 0 &&
-                !activeValidationConfig.AllowedValues.Contains(field.Trim()))
-            {
-                result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, false,
-                    FormatErrorMessage(fieldIndex, activeValidationConfig.Name, field, $"Value '{field}' is not in allowed values: [{string.Join(", ", activeValidationConfig.AllowedValues)}]", activeValidationConfig.ErrorMessage)));
-                continue;
-            }
-
-            // move validationConfig type check to dedicated function etc...
-            result.AddRecordResult(ProcessFieldByType(lineCount, field, activeValidationConfig, fieldIndex));
-        }//End of for loop
-
-        // A short row never reaches the loop above for the trailing columns, so flag every
-        // configured column that has no field. Missing is an error even when the column is nullable
-        // (an empty nullable field still has its delimiter).
+        // Flag missing columns on short rows
         foreach (var missingConfig in fileConfig.ValidationConfigs.Where(v => v.Index >= fields.Length))
         {
             result.AddRecordResult(new RecordResult(lineCount, missingConfig.Index, missingConfig.Name, string.Empty, false,
-                FormatErrorMessage(missingConfig.Index, missingConfig.Name, string.Empty,
+                RuleMessageFormatter.FormatErrorMessage(missingConfig.Index, missingConfig.Name, string.Empty,
                     $"Column is missing - row has {fields.Length} column(s) but the specification expects at least {missingConfig.Index + 1}", missingConfig.ErrorMessage)));
         }
 
@@ -178,80 +156,21 @@ public class ValidatorService : IValidatorService
         return result;
     }
 
-    /// <summary>
-    /// Helper to format descriptive validation error messages including field index, name, and value.
-    /// </summary>
-    private static string FormatErrorMessage(int fieldIndex, string fieldName, string value, string specificDetail, string? configuredMessage)
+    private void ValidateField(int lineCount, int fieldIndex, string field, ValidationConfig config, LineResult result)
     {
-        var prefix = $"Field '{fieldName}' at index {fieldIndex}";
-        if (!string.IsNullOrWhiteSpace(configuredMessage))
+        foreach (var rule in _fieldRules)
         {
-            return $"{prefix}: {specificDetail}. {configuredMessage}";
-        }
-        return $"{prefix}: {specificDetail}.";
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="lineCount"></param>
-    /// <param name="result"></param>
-    /// <param name="field"></param>
-    /// <param name="activeValidationConfig"></param>
-    /// <param name="fieldIndex"></param>
-    /// <returns></returns>
-    private static bool ProcessMinandMaxLengths(int lineCount, LineResult result, string field, ValidationConfig activeValidationConfig, int fieldIndex)
-    {
-        // minlength and max length checks
-        if (activeValidationConfig.minLength != null && field.Length < activeValidationConfig.minLength)
-        {
-            result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, false,
-                FormatErrorMessage(fieldIndex, activeValidationConfig.Name, field, $"Value '{field}' length ({field.Length}) is less than minimum length ({activeValidationConfig.minLength})", activeValidationConfig.ErrorMessage)));
-            return false;
-        }
-        if (activeValidationConfig.maxLength != null && field.Length > activeValidationConfig.maxLength)
-        {
-            result.AddRecordResult(new RecordResult(lineCount, fieldIndex, activeValidationConfig.Name, field, false,
-                FormatErrorMessage(fieldIndex, activeValidationConfig.Name, field, $"Value '{field}' length ({field.Length}) exceeds maximum length ({activeValidationConfig.maxLength})", activeValidationConfig.ErrorMessage)));
-            return false;
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Process the field by type (date, int, decimal, etc...)
-    /// This will check the field against the validation config type
-    /// and return a result
-    /// </summary>
-    /// <param name="lineCount">current line location!</param>
-    /// <param name="field">field param to be parsed and validated</param>
-    /// <param name="validationConfig">the configuration file to be used to search</param>
-    /// <param name="fieldIndex">field index</param>
-    /// <returns>nullable record result</returns>
-    RecordResult? ProcessFieldByType(int lineCount, string field, ValidationConfig validationConfig, int fieldIndex)
-    {
-        // Consistent handling for null/empty fields
-        if (string.IsNullOrEmpty(field))
-        {
-            if (validationConfig.IsNullable)
+            var ruleResult = rule.Validate(lineCount, fieldIndex, field, config);
+            if (ruleResult.RecordResult != null)
             {
-                // Valid: nullable and empty
-                return new RecordResult(lineCount, fieldIndex, validationConfig.Name, field, true, string.Empty);
+                result.AddRecordResult(ruleResult.RecordResult);
             }
-            // Invalid: not nullable and empty
-            return new RecordResult(lineCount, fieldIndex, validationConfig.Name, field, false,
-                FormatErrorMessage(fieldIndex, validationConfig.Name, field, "Field is required and cannot be empty", validationConfig.ErrorMessage));
-        }
 
-        bool typeResult = _typeValidator.ValidateType(field, validationConfig.type, validationConfig.Formats);
-        if (!typeResult)
-        {
-            var detail = $"Value '{field}' is not a valid {validationConfig.type}";
-            return new RecordResult(lineCount, fieldIndex, validationConfig.Name, field, false,
-                FormatErrorMessage(fieldIndex, validationConfig.Name, field, detail, validationConfig.ErrorMessage));
+            if (!ruleResult.ShouldContinue)
+            {
+                break;
+            }
         }
-        return null;
     }
 
     /// <summary>
