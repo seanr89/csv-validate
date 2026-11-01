@@ -1,0 +1,6 @@
+AccountId|CustomerId|AccountType|AccountStatus|OpenDate|Currency|Balance
+68b8a813-0813-4883-f927-b0f4fed9769b|4fa5727b-2403-b7ee-758d-18c0c636ad0f|Current|Active|2024-01-15|GBP|1250.50
+016c87fb-b2a1-ee94-74f2-adcc00448470|62379857-f545-808c-acd5-62d7130423f2|Savings|Active|2024-02-20|EUR|5400.00
+1ac5d85d-e03b-e849-7e0e-43d320167e4e|3f25840f-9713-cee7-c03b-8c6d44a6550a|Credit|Active|2024-03-10|USD|300.25
+421d1447-d2d7-675f-5220-0e19774def12|c9323c13-ea97-14b7-8f3e-4562c5072564|Current|Closed|2023-11-05|GBP|0.00
+df5e3b01-8a2d-d764-92e1-dc6ac4d6d86e|c9bd0c8d-c252-4e81-b300-0aa4005bed3d|Savings|Suspended|2024-04-01|USD|150.75

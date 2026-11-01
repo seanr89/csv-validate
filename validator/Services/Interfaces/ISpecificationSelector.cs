@@ -5,4 +5,5 @@ namespace validator.Services.Interfaces;
 public interface ISpecificationSelector
 {
     FileConfig? GetFileConfig(string fileType);
+    IReadOnlyList<string> GetAvailableFileTypes();
 }

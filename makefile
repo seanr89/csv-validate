@@ -15,4 +15,5 @@ release: ## Build the release version
 
 run-tests: ## Run the tests
 	@echo "Running tests"
-	@dotnet test ./validator.Tests/validator.Tests.csproj --no-restore --verbosity normal
+	@dotnet test ./validator.Tests/validator.Tests.csproj --verbosity normal
+

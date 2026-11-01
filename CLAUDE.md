@@ -33,13 +33,13 @@ The app is a single console process that validates delimited files against JSON 
 **Startup (`validator/Program.cs`)**: builds a Generic Host, registers services by interface (`IHeaderValidator`, `ITypeValidator`, `IValidatorService`, `ISpecificationSelector`) and the `App` singleton, and binds the `RunSettings` config section. `RunSettings` (`InboxPrefix`/`OutboxPrefix`) configures input file and output directories.
 
 **Run flow (`validator/App.cs`)**:
-1. The user picks a file type (`transactions`, `account`, `customer`, `card`).
+1. The user picks a file type discovered dynamically from loaded specifications (`_specificationSelector.GetAvailableFileTypes()`). Specifications without column definitions are hidden.
 2. `SpecificationSelector` (resolved against `AppContext.BaseDirectory` / copied specifications) returns the matching `FileConfig`.
 3. Input files are discovered in the resolved `InboxPrefix` directory (e.g. `files/{type}.csv`).
 4. `ValidatorService.ProcessFileWithConfig` produces a `List<LineResult>`, each holding `RecordResult`s for the failing fields.
-5. The user is optionally prompted to write results with `FileWriter` as CSV (`{OutboxPrefix}/{type}_results.csv`, append if it exists) or JSON (`{OutboxPrefix}/{input}.json`).
+5. The user is optionally prompted to write results with `IFileWriter` as CSV (`{OutboxPrefix}/{type}_results.csv`, append if it exists) or JSON (`{OutboxPrefix}/{input}.json`).
 
-**Specifications (`validator/Specifications/*.json`)**: one file per type, deserialized with Newtonsoft into `FileConfig` (`fileType`, `delimiter`, `headerLine`, `validationConfigs`). Each `ValidationConfig` describes one column by `index`, with `type`, `isNullable`, `minLength`/`maxLength`, `allowedValues`, `formats` (for dates), and an `errorMessage` shown on failure. Adding a new file type means adding a JSON spec and a matching menu entry in `App.Run`, which is hard-coded.
+**Specifications (`validator/Specifications/*.json`)**: one file per type, deserialized with Newtonsoft into `FileConfig` (`fileType`, `delimiter`, `headerLine`, `validationConfigs`). Each `ValidationConfig` describes one column by `index`, with `type`, `isNullable`, `minLength`/`maxLength`, `allowedValues`, `formats` (for dates), and an `errorMessage` shown on failure. Adding a new file type means adding a JSON spec with column definitions; `SpecificationSelector` discovers it automatically without code changes.
 
 **Per-line validation (`Services/ValidatorService.cs`)**: a line is split by the spec delimiter, and each field is evaluated via a modular pipeline of `IFieldRule` rule checkers (`RequiredFieldRule`, `LengthFieldRule`, `AllowedValuesFieldRule`, `TypeFieldRule`). A field index with no config yields a line-level error. A spec column with no field in the row (a short row) yields a failing `RecordResult` for that column, even if it is nullable. When `headerLine` is true, line 1 goes through `HeaderValidator` and is skipped as data.
 
