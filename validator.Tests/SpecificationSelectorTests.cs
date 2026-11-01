@@ -120,6 +120,34 @@ public class SpecificationSelectorTests : IDisposable
         Assert.Null(selector.GetFileConfig("MissingName"));
     }
 
+    [Fact]
+    public void GetAvailableFileTypes_ExcludesEmptySpecs_AndIncludesPopulatedSpecs()
+    {
+        var validFile = Path.Combine(_testDir, "ValidType.json");
+        File.WriteAllText(validFile, """
+        {
+            "fileType": "ValidType",
+            "delimiter": ",",
+            "headerLine": true,
+            "validationConfigs": [
+                {
+                    "name": "Col1",
+                    "type": "string",
+                    "index": 0,
+                    "isNullable": false
+                }
+            ]
+        }
+        """);
+
+        var selector = new SpecificationSelectorForTest(_testDir);
+        var availableTypes = selector.GetAvailableFileTypes();
+
+        Assert.Contains("ValidType", availableTypes);
+        Assert.DoesNotContain("TestType1", availableTypes);
+        Assert.DoesNotContain("TestType2", availableTypes);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_testDir))

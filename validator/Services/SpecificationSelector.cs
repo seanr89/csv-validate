@@ -94,6 +94,20 @@ public class SpecificationSelector : ISpecificationSelector
     }
 
     /// <summary>
+    /// Gets all available file types from loaded specifications that have at least one column validation configuration.
+    /// File specifications with no column definitions are excluded/hidden.
+    /// </summary>
+    /// <returns>A read-only list of available file type names.</returns>
+    public IReadOnlyList<string> GetAvailableFileTypes()
+    {
+        return _fileConfigs
+            .Where(f => !string.IsNullOrWhiteSpace(f.FileType) && f.ValidationConfigs != null && f.ValidationConfigs.Count > 0)
+            .Select(f => f.FileType!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    /// <summary>
     /// Internal function to load all file paths from a directory
     /// This will load all files in the directory and filter based on the extension
     /// and load the file config

@@ -40,7 +40,14 @@ public class App
     {
         _logger.LogInformation("App::Run");
 
-        string fileType = CreateAndWaitForResponse("Select file type", ["transactions", "account", "customer", "card"]);
+        var availableTypes = _specificationSelector.GetAvailableFileTypes();
+        if (availableTypes.Count == 0)
+        {
+            Console.WriteLine("Error: No valid file specifications with column definitions found.");
+            return;
+        }
+
+        string fileType = CreateAndWaitForResponse("Select file type", availableTypes.ToArray());
 
         var fileConfig = _specificationSelector.GetFileConfig(fileType);
         if (fileConfig == null)
