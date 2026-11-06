@@ -7,12 +7,13 @@ Auto-generated Task and TODO list of records scanned via github process
 - [ ] Support for optional/nullable fields in validation
 - [ ] Add configuration for default date/datetime formats in appsettings.json
 - [ ] Implement async file processing in `ValidatorService`
-- [ ] Add summary statistics to validation results (e.g., number of valid/invalid lines)
-- [ ] CLI: Add command-line options for output format (e.g., JSON, CSV, plain text)
+- [x] Add summary statistics to validation results (e.g., number of valid/invalid lines)
+- [x] CLI: Add command-line options for output format (e.g., JSON, CSV, plain text)
 - [ ] Add logging configuration for log level and output file
 - [ ] Add support for validating files with variable column order (header mapping)
 - [ ] Add unit tests for `ValidatorService` and header validation logic
-- [ ] Add integration tests for end-to-end file validation
+- [x] Add integration tests for end-to-end file validation
+- [x] Desktop GUI: Cross-platform Rust frontend client (drag-and-drop, summary statistics, error inspector, and standalone macOS bundle)
 
 ## Bugs
 - [x] `ValidatorService.ProcessFileWithConfig` does not handle empty files gracefully
