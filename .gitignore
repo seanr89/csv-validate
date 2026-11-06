@@ -404,3 +404,7 @@ FodyWeavers.xsd
 */files/outputs/** */
 **/coveragereport/**
 *.DS_Store
+
+# Rust / Cargo
+**/target/
+client/dist/

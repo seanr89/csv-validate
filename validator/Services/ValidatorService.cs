@@ -19,13 +19,16 @@ public class ValidatorService : IValidatorService
     {
         _headerValidator = headerValidator;
         _typeValidator = typeValidator;
-        _fieldRules = customRules?.ToList() ??
-        [
-            new RequiredFieldRule(),
-            new LengthFieldRule(),
-            new AllowedValuesFieldRule(),
-            new TypeFieldRule(_typeValidator)
-        ];
+        var rules = customRules?.ToList();
+        _fieldRules = (rules != null && rules.Count > 0)
+            ? rules
+            :
+            [
+                new RequiredFieldRule(),
+                new LengthFieldRule(),
+                new AllowedValuesFieldRule(),
+                new TypeFieldRule(_typeValidator)
+            ];
     }
 
     /// <summary>
