@@ -582,35 +582,69 @@ impl ClientApp {
                             .weak(),
                     );
                 }
-                ui.add_space(10.0);
-
+                ui.add_space(8.0);
+                ui.label(RichText::new("Validation Results").small().strong().weak());
+                ui.add_space(2.0);
                 ui.horizontal_wrapped(|ui| {
-                    stat_card(ui, "Data rows", &format_count(stats.data_lines), None);
+                    stat_card(
+                        ui,
+                        "Data rows",
+                        &format_count(stats.data_lines),
+                        None,
+                        Some("Total data rows in the file (excluding header/footer)"),
+                    );
                     stat_card(
                         ui,
                         "Valid rows",
                         &format_count(stats.data_lines.saturating_sub(data_invalid(&stats))),
                         Some(GREEN),
+                        Some("Data rows where all fields passed validation"),
                     );
                     stat_card(
                         ui,
                         "Invalid lines",
                         &format_count(stats.invalid_lines),
                         Some(if stats.invalid_lines > 0 { RED } else { GREEN }),
+                        Some("Rows containing one or more rule violations"),
                     );
                     stat_card(
                         ui,
                         "Field errors",
                         &format_count(stats.field_errors),
                         Some(if stats.field_errors > 0 { AMBER } else { GREEN }),
+                        Some("Total individual field failures across all rows"),
                     );
-                    stat_card(ui, "Total lines", &format_count(stats.total_lines), None);
-                    stat_card(ui, "File size", &format_bytes(report.file_size_bytes), None);
+                });
+
+                ui.add_space(10.0);
+                ui.label(
+                    RichText::new("File & Performance Information")
+                        .small()
+                        .strong()
+                        .weak(),
+                );
+                ui.add_space(2.0);
+                ui.horizontal_wrapped(|ui| {
+                    stat_card(
+                        ui,
+                        "Total lines",
+                        &format_count(stats.total_lines),
+                        None,
+                        Some("Total lines in the file including header"),
+                    );
+                    stat_card(
+                        ui,
+                        "File size",
+                        &format_bytes(report.file_size_bytes),
+                        None,
+                        Some("Size of the source file on disk"),
+                    );
                     stat_card(
                         ui,
                         "Engine time",
                         &format!("{} ms", format_count(report.duration_ms)),
                         None,
+                        Some("Time spent by the .NET validation engine"),
                     );
                     stat_card(
                         ui,
@@ -619,12 +653,14 @@ impl ClientApp {
                             format!("{} rows/s", format_count(t.round() as u64))
                         }),
                         None,
+                        Some("Processing speed in data rows per second"),
                     );
                     stat_card(
                         ui,
                         "Round trip",
                         &format!("{:.2} s", elapsed.as_secs_f32()),
                         None,
+                        Some("Total client execution time (process spawn, IPC, JSON parse)"),
                     );
                 });
 
@@ -918,21 +954,32 @@ fn drop_zone(ui: &mut egui::Ui, file: Option<&SelectedFile>) -> egui::Response {
     response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
-fn stat_card(ui: &mut egui::Ui, title: &str, value: &str, color: Option<Color32>) {
-    egui::Frame::group(ui.style())
-        .inner_margin(egui::Margin::same(12))
+fn stat_card(
+    ui: &mut egui::Ui,
+    title: &str,
+    value: &str,
+    color: Option<Color32>,
+    tooltip: Option<&str>,
+) {
+    let response = egui::Frame::group(ui.style())
+        .inner_margin(egui::Margin::symmetric(14, 10))
         .corner_radius(8)
         .show(ui, |ui| {
-            ui.set_min_width(130.0);
+            ui.set_min_width(120.0);
             ui.vertical(|ui| {
                 ui.label(RichText::new(title).small().weak());
-                let mut text = RichText::new(value).size(22.0).strong();
+                let mut text = RichText::new(value).size(20.0).strong();
                 if let Some(color) = color {
                     text = text.color(color);
                 }
                 ui.label(text);
             });
-        });
+        })
+        .response;
+
+    if let Some(tip) = tooltip {
+        response.on_hover_text(tip);
+    }
 }
 
 fn empty_state(ui: &mut egui::Ui, title: &str, subtitle: &str, color: Color32) {

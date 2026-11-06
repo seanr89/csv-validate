@@ -15,7 +15,10 @@ fn engine_can_discover_and_list_specs() {
     let root = find_repo_root();
     let validator_bin = root.join("validator/bin/Debug/net10.0/validator");
     if !validator_bin.is_file() {
-        eprintln!("Skipping integration test: validator binary not yet compiled at {}", validator_bin.display());
+        eprintln!(
+            "Skipping integration test: validator binary not yet compiled at {}",
+            validator_bin.display()
+        );
         return;
     }
 
@@ -24,8 +27,14 @@ fn engine_can_discover_and_list_specs() {
     assert!(!specs.specs.is_empty(), "Specs should not be empty");
 
     let types: Vec<&str> = specs.specs.iter().map(|s| s.file_type.as_str()).collect();
-    assert!(types.contains(&"account"), "Expected 'account' spec in {types:?}");
-    assert!(types.contains(&"transactions"), "Expected 'transactions' spec in {types:?}");
+    assert!(
+        types.contains(&"account"),
+        "Expected 'account' spec in {types:?}"
+    );
+    assert!(
+        types.contains(&"transactions"),
+        "Expected 'transactions' spec in {types:?}"
+    );
 }
 
 #[test]
@@ -39,7 +48,9 @@ fn engine_can_validate_real_account_csv() {
     }
 
     let engine = Engine::discover().expect("engine discovery should succeed");
-    let report = engine.validate("account", &account_csv).expect("validate should succeed");
+    let report = engine
+        .validate("account", &account_csv)
+        .expect("validate should succeed");
 
     assert!(report.success);
     assert_eq!(report.spec.as_deref(), Some("account"));
@@ -67,7 +78,9 @@ AccountId|CustomerId|AccountType|AccountStatus|OpenDate|Currency|Balance\n\
     std::fs::write(&corrupt_csv, content).expect("write corrupt csv");
 
     let engine = Engine::discover().expect("engine discovery should succeed");
-    let report = engine.validate("account", &corrupt_csv).expect("validate should parse output");
+    let report = engine
+        .validate("account", &corrupt_csv)
+        .expect("validate should parse output");
 
     assert!(report.success);
     let stats = report.stats.expect("stats present");
